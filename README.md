@@ -35,7 +35,7 @@ interface PluginConfig {
 
 ## Enabling
 To enable the plugin, add the following "plugins" field to your tsconfig's compilerOptions. You can configure the plugin however you'd like, as shown above.
-```json
+```jsonc
 {
 	"compilerOptions": {
 		// ...
