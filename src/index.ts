@@ -11,7 +11,7 @@ import { NetworkType, RojoResolver } from "./Rojo/RojoResolver";
 import { isPathDescendantOf } from "./Rojo/RojoResolver/fsUtil";
 import { createProxy } from "./createProxy";
 import { PathTranslator } from "./Rojo/PathTranslator";
-import { getConfig } from "config";
+import { getConfig } from "./config";
 
 enum NetworkBoundary {
 	Client = "Client",
