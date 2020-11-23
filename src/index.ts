@@ -148,7 +148,6 @@ export = function init(modules: { typescript: typeof tssl }) {
 						const completionBoundary = getNetworkBoundary(v.source);
 						if (!BoundaryCanSee(boundary, completionBoundary)) {
 							if (config.mode === "prefix") {
-								v.sortText = v.name;
 								v.insertText = v.name;
 								v.name = completionBoundary + ": " + v.name;
 							} else if (config.mode === "remove") return;
