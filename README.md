@@ -5,7 +5,7 @@ Currently this only has the aforementioned functionality, however, I do plan to 
 ## Installation
 You install this like you would any npm package.
 
-`npm install roblox-ts-extensions`
+`npm install --save-dev roblox-ts-extensions`
 
 To enable the plugin and configure it, please look to the sections below.
 

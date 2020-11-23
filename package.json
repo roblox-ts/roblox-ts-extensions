@@ -1,6 +1,6 @@
 {
 	"name": "roblox-ts-extensions",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "A Language Service plugin to emphasize the client/server network boundary when using Roblox-TS.",
 	"main": "index.js",
 	"author": "Fireboltofdeath <fireboltofpublic@gmail.com> (https://github.com/Fireboltofdeath)",
@@ -15,10 +15,10 @@
 	"directories": {},
 	"devDependencies": {
 		"@types/node": "^14.14.9",
+		"@types/fs-extra": "^9.0.4",
 		"typescript": "^4.1.2"
 	},
 	"dependencies": {
-		"@types/fs-extra": "^9.0.4",
 		"ajv": "^6.12.6",
 		"fs-extra": "^9.0.1"
 	},
