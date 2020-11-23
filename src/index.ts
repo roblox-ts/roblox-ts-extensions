@@ -12,6 +12,8 @@ import { isPathDescendantOf } from "./Rojo/RojoResolver/fsUtil";
 import { createProxy } from "./createProxy";
 import { PathTranslator } from "./Rojo/PathTranslator";
 import { getConfig } from "./config";
+import { Provider } from "./util/provider";
+import { createConstants } from "./util/constants";
 
 enum NetworkBoundary {
 	Client = "Client",
@@ -19,35 +21,12 @@ enum NetworkBoundary {
 	Shared = "Shared",
 }
 
-function createConstants(info: ts.server.PluginCreateInfo) {
-	const currentDirectory = info.languageServiceHost.getCurrentDirectory();
-	const compilerOptions = info.project.getCompilerOptions();
-	const formatOptions = info.project.projectService.getHostFormatCodeOptions();
-	const userPreferences = info.project.projectService.getHostPreferences();
-	const outDir = compilerOptions.outDir ?? currentDirectory;
-	const srcDir = compilerOptions.rootDir ?? currentDirectory;
-	const pathTranslator = new PathTranslator(srcDir, outDir, undefined, false);
-	const config = getConfig(info.config);
-	const log = (arg: string) => info.project.projectService.logger.info("[Roblox-TS Extensions]: " + arg);
-
-	return {
-		config,
-		currentDirectory,
-		compilerOptions,
-		userPreferences,
-		pathTranslator,
-		formatOptions,
-		outDir,
-		srcDir,
-		log,
-	}
-}
-
 export = function init(modules: { typescript: typeof tssl }) {
 	const ts = modules.typescript;
 	function create(info: ts.server.PluginCreateInfo) {
 		const service = info.languageService;
 		const serviceProxy = createProxy(service);
+		const provider = new Provider(createConstants(info), serviceProxy, service, info);
 		const {
 			config,
 			currentDirectory,
@@ -56,7 +35,7 @@ export = function init(modules: { typescript: typeof tssl }) {
 			pathTranslator,
 			srcDir,
 			log
-		} = createConstants(info);
+		} = provider.constants;
 
 		let rojoResolver: RojoResolver;
 		if (config.useRojo) {
@@ -138,6 +117,16 @@ export = function init(modules: { typescript: typeof tssl }) {
 			return from === to || (to === NetworkBoundary.Shared);
 		}
 
+		// serviceProxy["getSemanticDiagnostics"] = (file) => {
+		// 	let orig = service.getSemanticDiagnostics(file);
+		// 	const snapshot = service.getProgram()?.getSourceFile(file);
+		// 	orig.forEach(x => {
+		// 		x.start = 0;
+		// 		x.length = snapshot?.getPositionOfLineAndCharacter(1, 15);
+		// 	});
+		// 	return orig;
+		// }
+
 		serviceProxy["getCompletionsAtPosition"] = (file, pos, opt) => {
 			const boundary = getNetworkBoundary(file);
 			let orig = service.getCompletionsAtPosition(file, pos, opt);
@@ -177,11 +166,42 @@ export = function init(modules: { typescript: typeof tssl }) {
 										}
 									}
 								}
+							} else if (x.description.match(/^Add '.*' to existing import declaration from/)) {
+								for (const change of x.changes) {
+									if (change.fileName === file) {
+										const importDecl = change.textChanges[0];
+										if (importDecl) {
+											const sourceFile = provider.getSourceFile(file);
+											const len = 6;
+											let char = -1;
+											for (let ind = 0; ind < 50; ind++) {
+												if (importDecl.span.start - ind === 0) break;
+												const text = sourceFile.getText(importDecl.span.start - ind, len);
+												if (text === "import") {
+													x.changes.push({
+														fileName: file,
+														textChanges: [
+															{
+																newText: " type",
+																span: ts.createTextSpan(importDecl.span.start - ind, len + 5)
+															}
+														]
+													})
+													break;
+												}
+											}
+										}
+									}
+								}
 							}
 						}
 					}
 				}
 				return result;
+			}
+			const result = service.getCompletionEntryDetails(file, pos, entry, formatOptions, source, preferences);
+			if (result?.name === "TestController") {
+				log(result.name + " : " + JSON.stringify(result));
 			}
 			return service.getCompletionEntryDetails(file, pos, entry, formatOptions, source, preferences);
 		}
