@@ -29,6 +29,11 @@ interface PluginConfig {
 	// Whether to use Rojo to calculate server/client boundaries. The client and server properties can override certain directories if necessary.
 	// Default: true
 	useRojo: boolean;
+
+	// Only works on prefix mode
+	// When importing a new cross-boundary import, fix existing import.
+	// Example: import { MyClientClass } -> import type { MyClientClass, MyOtherClientClass }
+	convertExistingImports: boolean;
 }
 ```
 
