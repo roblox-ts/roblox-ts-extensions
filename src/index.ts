@@ -117,15 +117,21 @@ export = function init(modules: { typescript: typeof tssl }) {
 			return from === to || (to === NetworkBoundary.Shared);
 		}
 
-		// serviceProxy["getSemanticDiagnostics"] = (file) => {
-		// 	let orig = service.getSemanticDiagnostics(file);
-		// 	const snapshot = service.getProgram()?.getSourceFile(file);
-		// 	orig.forEach(x => {
-		// 		x.start = 0;
-		// 		x.length = snapshot?.getPositionOfLineAndCharacter(1, 15);
-		// 	});
-		// 	return orig;
-		// }
+		serviceProxy["getSemanticDiagnostics"] = (file) => {
+			let orig = service.getSemanticDiagnostics(file);
+			const sourceFile = provider.getSourceFile(file);
+			sourceFile.getImports().forEach(($import) => {
+				orig.push({
+					category: ts.DiagnosticCategory.Error,
+					code: 1,
+					file: sourceFile.inner,
+					messageText: JSON.stringify($import),
+					start: $import.start,
+					length: $import.end - $import.start
+				})
+			});
+			return orig;
+		}
 
 		serviceProxy["getCompletionsAtPosition"] = (file, pos, opt) => {
 			const boundary = getNetworkBoundary(file);
