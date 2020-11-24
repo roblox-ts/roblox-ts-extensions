@@ -166,7 +166,7 @@ export = function init(modules: { typescript: typeof tssl }) {
 										}
 									}
 								}
-							} else if (x.description.match(/^Add '.*' to existing import declaration from/)) {
+							} else if (x.description.match(/^Add '.*' to existing import declaration from/) && config.convertExistingImports) {
 							out:
 								for (const change of x.changes) {
 									if (change.fileName === file) {
