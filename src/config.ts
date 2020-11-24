@@ -14,6 +14,7 @@ export interface PluginConfig {
 	client: string[],
 	server: string[],
 	mode: "remove" | "prefix",
+	diagnosticsMode: "off" | "warning" | "error" | "message"
 }
 
 
@@ -28,5 +29,6 @@ export function getConfig(config: any): PluginConfig {
 		convertExistingImports: typeof config.convertExistingImports === "boolean" ? config.convertExistingImports : true,
 		client: typeof config.client === "string" ? [config.client] : checkArray(config.client) ? config.client : [],
 		server: typeof config.server === "string" ? [config.server] : checkArray(config.server) ? config.server : [],
+		diagnosticsMode: ["off", "warning", "error", "message"].includes(config.diagnosticsMode) ? config.diagnosticsMode : "warning"
 	}
 }

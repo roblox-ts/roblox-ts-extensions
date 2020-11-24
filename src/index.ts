@@ -119,17 +119,30 @@ export = function init(modules: { typescript: typeof tssl }) {
 
 		serviceProxy["getSemanticDiagnostics"] = (file) => {
 			let orig = service.getSemanticDiagnostics(file);
-			const sourceFile = provider.getSourceFile(file);
-			sourceFile.getImports().forEach(($import) => {
-				orig.push({
-					category: ts.DiagnosticCategory.Error,
-					code: 1,
-					file: sourceFile.inner,
-					messageText: JSON.stringify($import),
-					start: $import.start,
-					length: $import.end - $import.start
-				})
-			});
+			if (config.diagnosticsMode !== "off") {
+				const diagnosticsCategory = ({
+					["warning"]: ts.DiagnosticCategory.Warning,
+					["error"]: ts.DiagnosticCategory.Error,
+					["message"]: ts.DiagnosticCategory.Message
+				})[config.diagnosticsMode];
+
+				const currentBoundary = getNetworkBoundary(file);
+				const sourceFile = provider.getSourceFile(file);
+				sourceFile.getImports().forEach(($import) => {
+					const importBoundary = getNetworkBoundary($import.absolutePath);
+					log(currentBoundary + " > " + importBoundary + " > " + file + " > " + $import.absolutePath);
+					if (!BoundaryCanSee(currentBoundary, importBoundary)) {
+						orig.push({
+							category: diagnosticsCategory,
+							code: 1,
+							file: sourceFile.inner,
+							messageText: `Cannot import ${importBoundary} module from ${currentBoundary}`,
+							start: $import.start,
+							length: $import.end - $import.start
+						});
+					}
+				});
+			}
 			return orig;
 		}
 
