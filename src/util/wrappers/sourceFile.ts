@@ -58,7 +58,7 @@ export class SourceFile {
 					linesWithoutMatch = 0;
 					const start = this.inner.getPositionOfLineAndCharacter(line.lineNumber, line.text.search(lineMatch[0]));
 					const end = start + lineMatch[0].length;
-					const absolutePath = path.isAbsolute(lineMatch[2]) ? lineMatch[2] : path.join(this.inner.fileName, lineMatch[2]);
+					const absolutePath = lineMatch[2].startsWith(".") ? path.join(path.dirname(this.inner.fileName), lineMatch[2]) : path.join(this.provider.constants.srcDir, lineMatch[2]);
 					imports.push({
 						path: lineMatch[2],
 						identifiers,
