@@ -167,28 +167,24 @@ export = function init(modules: { typescript: typeof tssl }) {
 									}
 								}
 							} else if (x.description.match(/^Add '.*' to existing import declaration from/)) {
+							out:
 								for (const change of x.changes) {
 									if (change.fileName === file) {
 										const importDecl = change.textChanges[0];
 										if (importDecl) {
 											const sourceFile = provider.getSourceFile(file);
-											const len = 6;
-											let char = -1;
-											for (let ind = 0; ind < 50; ind++) {
-												if (importDecl.span.start - ind === 0) break;
-												const text = sourceFile.getText(importDecl.span.start - ind, len);
-												if (text === "import") {
-													x.changes.push({
-														fileName: file,
-														textChanges: [
-															{
-																newText: " type",
-																span: ts.createTextSpan(importDecl.span.start - ind, len + 5)
-															}
-														]
-													})
-													break;
-												}
+											const seek = sourceFile.seek(importDecl.span.start, "import", -1);
+											if (seek) {
+												x.changes.push({
+													fileName: file,
+													textChanges: [
+														{
+															newText: "import type",
+															span: ts.createTextSpan(seek.start, seek.len)
+														}
+													]
+												});
+												break out;
 											}
 										}
 									}
