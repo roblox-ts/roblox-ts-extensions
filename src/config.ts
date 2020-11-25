@@ -26,7 +26,7 @@ export function getConfig(config: any): PluginConfig {
 	return {
 		mode: config.mode === "remove" ? "remove" : "prefix",
 		useRojo: typeof config.useRojo === "boolean" ? config.useRojo : true,
-		convertExistingImports: typeof config.convertExistingImports === "boolean" ? config.convertExistingImports : true,
+		convertExistingImports: false,
 		client: typeof config.client === "string" ? [config.client] : checkArray(config.client) ? config.client : [],
 		server: typeof config.server === "string" ? [config.server] : checkArray(config.server) ? config.server : [],
 		diagnosticsMode: ["off", "warning", "error", "message"].includes(config.diagnosticsMode) ? config.diagnosticsMode : "warning"

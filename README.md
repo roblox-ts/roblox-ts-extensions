@@ -30,10 +30,10 @@ interface PluginConfig {
 	// Default: true
 	useRojo: boolean;
 
-	// Only works on prefix mode
-	// When importing a new cross-boundary import, fix existing import.
-	// Example: import { MyClientClass } -> import type { MyClientClass, MyOtherClientClass }
-	convertExistingImports: boolean;
+	// What should non-type only cross-boundary imports be flagged as.
+	// Set to off to disable diagnostics.
+	// Default: warning
+	diagnosticsMode: "off" | "warning" | "error" | "message";
 }
 ```
 
