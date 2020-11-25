@@ -34,4 +34,4 @@ export type Constants = ReturnType<typeof createConstants>;
 export const EXISTING_IMPORT_PATTERN = /^Add '.*' to existing import declaration from/;
 export const NEW_IMPORT_PATTERN = /^Import '.*' from module/;
 
-export const IMPORT_PATTERN = /import\s*{(.*)}\s*from\s*['"](.*)['"]/
+export const IMPORT_PATTERN = /import\s*{\s*((?:\w*(?:,\s*)?)*)\s*?}\s*from\s*['"](.*)['"]/
