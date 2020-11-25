@@ -117,21 +117,6 @@ export = function init(modules: { typescript: typeof tssl }) {
 			return from === to || (to === NetworkBoundary.Shared);
 		}
 
-		// serviceProxy["getSuggestionDiagnostics"] = (file) => {
-		// 	const orig = service.getSuggestionDiagnostics(file);
-		// 	const previousValues: any[] = [];
-		// 	log(JSON.stringify(orig, (key, val) => {
-		// 		if (!previousValues.includes(val)) {
-		// 			if (["string", "number", "bool", "boolean"].some(x => typeof val === x)) return val;
-		// 			previousValues.push(val);
-		// 			return val;
-		// 		} else {
-		// 			return "[CIRCULAR]";
-		// 		}
-		// 	}));
-		// 	return orig;
-		// }
-
 		serviceProxy["getSemanticDiagnostics"] = (file) => {
 			let orig = service.getSemanticDiagnostics(file);
 			if (config.diagnosticsMode !== "off") {
@@ -201,7 +186,6 @@ export = function init(modules: { typescript: typeof tssl }) {
 		serviceProxy["getCompletionsAtPosition"] = (file, pos, opt) => {
 			const boundary = getNetworkBoundary(file);
 			let orig = service.getCompletionsAtPosition(file, pos, opt);
-			log(`version: '${file}': ${info.project.getScriptVersion(file)}`);
 			if (orig) {
 				const entries: ts.CompletionEntry[] = [];
 				orig.entries.forEach(v => {
