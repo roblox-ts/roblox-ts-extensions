@@ -25,6 +25,10 @@ export function createConstants(info: ts.server.PluginCreateInfo) {
 	}
 }
 
+export enum Diagnostics {
+	CrossBoundaryImport = 1800000,
+}
+
 export type Constants = ReturnType<typeof createConstants>;
 
 export const EXISTING_IMPORT_PATTERN = /^Add '.*' to existing import declaration from/;

@@ -43,6 +43,26 @@ export class SourceFile {
 		}
 	}
 
+	transformImportPath(importPath: string) {
+		return this.provider.transformImportPath(this.inner.fileName, importPath);
+	}
+
+	getImport(start: number, end: number = this.inner.getLineEndOfPosition(start)): ImportInfo | undefined {
+		const lineMatch = IMPORT_PATTERN.exec(this.getTextRange(start, end).trim());
+		if (lineMatch) {
+			const identifiers = lineMatch[1].split(",").map(x => x.trim());
+			if (!identifiers.some(x => /\s/.test(x))) {
+				return {
+					path: lineMatch[2],
+					absolutePath: this.transformImportPath(lineMatch[2]),
+					identifiers,
+					start,
+					end
+				};
+			}
+		}
+	}
+
 	getImports() {
 		const imports: ImportInfo[] = [];
 
@@ -51,22 +71,9 @@ export class SourceFile {
 			if (linesWithoutMatch >= 10) break;
 			linesWithoutMatch++;
 
-			const lineMatch = IMPORT_PATTERN.exec(line.text.trim());
-			if (lineMatch) {
-				const identifiers = lineMatch[1].split(",").map(x => x.trim());
-				if (!identifiers.some(x => /\s/.test(x))) {
-					linesWithoutMatch = 0;
-					const start = this.inner.getPositionOfLineAndCharacter(line.lineNumber, line.text.search(lineMatch[0]));
-					const end = start + lineMatch[0].length;
-					const absolutePath = lineMatch[2].startsWith(".") ? path.join(path.dirname(this.inner.fileName), lineMatch[2]) : path.join(this.provider.constants.srcDir, lineMatch[2]);
-					imports.push({
-						path: lineMatch[2],
-						identifiers,
-						absolutePath,
-						start,
-						end
-					});
-				}
+			const lineImport = this.getImport(line.start, line.end);
+			if (lineImport) {
+				imports.push(lineImport);
 			}
 		}
 

@@ -13,7 +13,7 @@ import { createProxy } from "./createProxy";
 import { PathTranslator } from "./Rojo/PathTranslator";
 import { getConfig } from "./config";
 import { Provider } from "./util/provider";
-import { createConstants } from "./util/constants";
+import { createConstants, Diagnostics } from "./util/constants";
 
 enum NetworkBoundary {
 	Client = "Client",
@@ -65,7 +65,6 @@ export = function init(modules: { typescript: typeof tssl }) {
 			if (isInDirectories(file, config.server)) return NetworkBoundary.Server;
 			if (rojoResolver) {
 				const rbxPath = rojoResolver.getRbxPathFromFilePath(pathTranslator.getOutputPath(file));
-				log(pathTranslator.getOutputPath(file));
 				if (rbxPath) {
 					const networkType = rojoResolver.getNetworkType(rbxPath);
 					if (networkType === NetworkType.Client) {
@@ -85,21 +84,22 @@ export = function init(modules: { typescript: typeof tssl }) {
 		 * @param source Source path.
 		 * @param entry The entry to retrieve.
 		 */
-		function getEntryDetails(file: string, source: string, entry: string) {
-			return service.getCompletionEntryDetails(file, 0, entry, formatOptions, source, userPreferences);
+		function getEntryDetails(file: string, pos: number, source: string, entry: string) {
+			return service.getCompletionEntryDetails(file, pos, entry, formatOptions, source, userPreferences);
 		}
 
 		/**
 		 * Check if the specified entry is an auto import and is a source file.
 		 * @param file The file path.
+		 * @param pos The position.
 		 * @param entry The entry to check.
 		 */
-		function isAutoImport(file: string, entry: ts.CompletionEntry): entry is ts.CompletionEntry & { source: string } {
+		function isAutoImport(file: string, pos: number, entry: ts.CompletionEntry): entry is ts.CompletionEntry & { source: string } {
 			const newImport = /^Import '.*' from module/;
 			const existingImport = /^Add '.*' to existing import declaration from/;
 			if (entry.hasAction && entry.source && entry.source.length > 0) {
 				if (isPathDescendantOf(entry.source, srcDir) && !isPathDescendantOf(entry.source, path.join(currentDirectory, "node_modules"))) {
-					const actions = getEntryDetails(file, entry.source, entry.name);
+					const actions = getEntryDetails(file, pos, entry.source, entry.name);
 					if (actions && actions.codeActions) {
 						return actions.codeActions.some((value) => value.description.match(newImport) || value.description.match(existingImport));
 					}
@@ -117,6 +117,21 @@ export = function init(modules: { typescript: typeof tssl }) {
 			return from === to || (to === NetworkBoundary.Shared);
 		}
 
+		// serviceProxy["getSuggestionDiagnostics"] = (file) => {
+		// 	const orig = service.getSuggestionDiagnostics(file);
+		// 	const previousValues: any[] = [];
+		// 	log(JSON.stringify(orig, (key, val) => {
+		// 		if (!previousValues.includes(val)) {
+		// 			if (["string", "number", "bool", "boolean"].some(x => typeof val === x)) return val;
+		// 			previousValues.push(val);
+		// 			return val;
+		// 		} else {
+		// 			return "[CIRCULAR]";
+		// 		}
+		// 	}));
+		// 	return orig;
+		// }
+
 		serviceProxy["getSemanticDiagnostics"] = (file) => {
 			let orig = service.getSemanticDiagnostics(file);
 			if (config.diagnosticsMode !== "off") {
@@ -130,11 +145,10 @@ export = function init(modules: { typescript: typeof tssl }) {
 				const sourceFile = provider.getSourceFile(file);
 				sourceFile.getImports().forEach(($import) => {
 					const importBoundary = getNetworkBoundary($import.absolutePath);
-					log(currentBoundary + " > " + importBoundary + " > " + file + " > " + $import.absolutePath);
 					if (!BoundaryCanSee(currentBoundary, importBoundary)) {
 						orig.push({
 							category: diagnosticsCategory,
-							code: 1,
+							code: Diagnostics.CrossBoundaryImport,
 							file: sourceFile.inner,
 							messageText: `Cannot import ${importBoundary} module from ${currentBoundary}`,
 							start: $import.start,
@@ -143,16 +157,55 @@ export = function init(modules: { typescript: typeof tssl }) {
 					}
 				});
 			}
+
+			return orig;
+		}
+
+		serviceProxy["getCodeFixesAtPosition"] = (file, start, end, codes, formatOptions, preferences) => {
+			let orig = service.getCodeFixesAtPosition(file, start, end, codes, formatOptions, preferences);
+
+			const semanticDiagnostics = serviceProxy.getSemanticDiagnostics(file).filter(x => Diagnostics[x.code] !== undefined);
+			semanticDiagnostics.forEach(diag => {
+				if (diag.start !== undefined && diag.length !== undefined) {
+					if (start >= diag.start && end <= (diag.start + diag.length)) {
+						const sourceFile = provider.getSourceFile(file);
+						const $import = sourceFile.getImport(diag.start, diag.start + diag.length);
+						if ($import) {
+							orig = [
+								{
+									fixName: "crossBoundaryImport",
+									fixAllDescription: "Make all cross-boundary imports type only",
+									description: "Make cross-boundary import type only.",
+									changes: [
+										{
+											fileName: file,
+											textChanges: [
+												{
+													newText: "import type",
+													span: ts.createTextSpan($import.start, 6)
+												}
+											]
+										}
+									]
+								},
+								...orig
+							]
+						}
+					}
+				}
+			});
+
 			return orig;
 		}
 
 		serviceProxy["getCompletionsAtPosition"] = (file, pos, opt) => {
 			const boundary = getNetworkBoundary(file);
 			let orig = service.getCompletionsAtPosition(file, pos, opt);
+			log(`version: '${file}': ${info.project.getScriptVersion(file)}`);
 			if (orig) {
 				const entries: ts.CompletionEntry[] = [];
 				orig.entries.forEach(v => {
-					if (isAutoImport(file, v)) {
+					if (isAutoImport(file, pos, v)) {
 						const completionBoundary = getNetworkBoundary(v.source);
 						if (!BoundaryCanSee(boundary, completionBoundary)) {
 							if (config.mode === "prefix") {
@@ -213,10 +266,6 @@ export = function init(modules: { typescript: typeof tssl }) {
 					}
 				}
 				return result;
-			}
-			const result = service.getCompletionEntryDetails(file, pos, entry, formatOptions, source, preferences);
-			if (result?.name === "TestController") {
-				log(result.name + " : " + JSON.stringify(result));
 			}
 			return service.getCompletionEntryDetails(file, pos, entry, formatOptions, source, preferences);
 		}

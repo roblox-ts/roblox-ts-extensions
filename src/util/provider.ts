@@ -21,4 +21,10 @@ export class Provider {
 			this
 		)
 	}
+
+	transformImportPath(filePath: string, importPath: string): string {
+		return importPath.startsWith(".")
+			? path.join(path.dirname(filePath), importPath)
+			: path.join(this.constants.srcDir, importPath);
+	}
 }
