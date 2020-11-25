@@ -270,6 +270,14 @@ export = function init(modules: { typescript: typeof tssl }) {
 			return service.getCompletionEntryDetails(file, pos, entry, formatOptions, source, preferences);
 		}
 
+		// Thank you, typescript, for not giving a proper api for registering a codefix.
+		for (const x in Diagnostics) {
+			(ts as any).codefix.registerCodeFix({
+				errorCodes: [Diagnostics[x]],
+				getCodeActions: () => null
+			});
+		}
+
 		log("Roblox-TS language extensions has loaded.");
 		return serviceProxy;
 	}
