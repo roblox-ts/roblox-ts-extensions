@@ -15,6 +15,7 @@ type ImportInfo = {
 	identifiers: string[],
 	path: string,
 	absolutePath: string,
+	typeOnly: boolean,
 	start: number,
 	end: number
 }
@@ -50,16 +51,15 @@ export class SourceFile {
 	getImport(start: number, end: number = this.inner.getLineEndOfPosition(start)): ImportInfo | undefined {
 		const lineMatch = IMPORT_PATTERN.exec(this.getTextRange(start, end).trim());
 		if (lineMatch) {
-			const identifiers = lineMatch[1].split(",").map(x => x.trim());
-			if (!identifiers.some(x => /\s/.test(x))) {
-				return {
-					path: lineMatch[2],
-					absolutePath: this.transformImportPath(lineMatch[2]),
-					identifiers,
-					start,
-					end
-				};
-			}
+			const identifiers = lineMatch[2].split(",").map(x => x.trim()).filter(x => !/\s/.test(x));
+			return {
+				path: lineMatch[3],
+				absolutePath: this.transformImportPath(lineMatch[3]),
+				typeOnly: lineMatch[1] === "type" ? true : false,
+				identifiers,
+				start,
+				end
+			};
 		}
 	}
 

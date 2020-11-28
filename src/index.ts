@@ -5,13 +5,13 @@
 
 "use strict";
 
+import { } from "ts-expose-internals";
 import * as tssl from "typescript/lib/tsserverlibrary";
+import * as ts from "typescript";
 import * as path from 'path';
 import { NetworkType, RojoResolver } from "./Rojo/RojoResolver";
 import { isPathDescendantOf } from "./Rojo/RojoResolver/fsUtil";
 import { createProxy } from "./createProxy";
-import { PathTranslator } from "./Rojo/PathTranslator";
-import { getConfig } from "./config";
 import { Provider } from "./util/provider";
 import { createConstants, Diagnostics } from "./util/constants";
 
@@ -21,9 +21,9 @@ enum NetworkBoundary {
 	Shared = "Shared",
 }
 
-export = function init(modules: { typescript: typeof tssl }) {
+export = function init(modules: { typescript: typeof ts }) {
 	const ts = modules.typescript;
-	function create(info: ts.server.PluginCreateInfo) {
+	function create(info: tssl.server.PluginCreateInfo) {
 		const service = info.languageService;
 		const serviceProxy = createProxy(service);
 		const provider = new Provider(createConstants(info), serviceProxy, service, info);
@@ -128,7 +128,7 @@ export = function init(modules: { typescript: typeof tssl }) {
 
 				const currentBoundary = getNetworkBoundary(file);
 				const sourceFile = provider.getSourceFile(file);
-				sourceFile.getImports().forEach(($import) => {
+				sourceFile.getImports().filter(x => !x.typeOnly).forEach(($import) => {
 					const importBoundary = getNetworkBoundary($import.absolutePath);
 					if (!BoundaryCanSee(currentBoundary, importBoundary)) {
 						orig.push({
@@ -256,10 +256,13 @@ export = function init(modules: { typescript: typeof tssl }) {
 
 		// Thank you, typescript, for not giving a proper api for registering a codefix.
 		for (const x in Diagnostics) {
-			(ts as any).codefix.registerCodeFix({
-				errorCodes: [Diagnostics[x]],
-				getCodeActions: () => null
-			});
+			const diag = Diagnostics[x];
+			if (typeof diag === "number") {
+				ts.codefix.registerCodeFix({
+					errorCodes: [diag],
+					getCodeActions: () => undefined
+				});
+			}
 		}
 
 		log("Roblox-TS language extensions has loaded.");
