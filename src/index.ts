@@ -106,8 +106,8 @@ export = function init(modules: { typescript: typeof tssl }) {
 		 * @param source Source path.
 		 * @param entry The entry to retrieve.
 		 */
-		function getEntryDetails(file: string, source: string, entry: string) {
-			return service.getCompletionEntryDetails(file, 0, entry, formatOptions, source, userPreferences);
+		function getEntryDetails(file: string, pos: number, source: string, entry: string) {
+			return service.getCompletionEntryDetails(file, pos, entry, formatOptions, source, userPreferences);
 		}
 
 		/**
@@ -115,12 +115,12 @@ export = function init(modules: { typescript: typeof tssl }) {
 		 * @param file The file path.
 		 * @param entry The entry to check.
 		 */
-		function isAutoImport(file: string, entry: ts.CompletionEntry): entry is ts.CompletionEntry & { source: string } {
+		function isAutoImport(file: string, pos: number, entry: ts.CompletionEntry): entry is ts.CompletionEntry & { source: string } {
 			const newImport = /^Import '.*' from module/;
 			const existingImport = /^Add '.*' to existing import declaration from/;
 			if (entry.hasAction && entry.source && entry.source.length > 0) {
 				if (isPathDescendantOf(entry.source, srcDir) && !isPathDescendantOf(entry.source, path.join(currentDirectory, "node_modules"))) {
-					const actions = getEntryDetails(file, entry.source, entry.name);
+					const actions = getEntryDetails(file, pos, entry.source, entry.name);
 					if (actions && actions.codeActions) {
 						return actions.codeActions.some((value) => value.description.match(newImport) || value.description.match(existingImport));
 					}
@@ -144,7 +144,7 @@ export = function init(modules: { typescript: typeof tssl }) {
 			if (orig) {
 				const entries: ts.CompletionEntry[] = [];
 				orig.entries.forEach(v => {
-					if (isAutoImport(file, v)) {
+					if (isAutoImport(file, pos, v)) {
 						const completionBoundary = getNetworkBoundary(v.source);
 						if (!BoundaryCanSee(boundary, completionBoundary)) {
 							if (config.mode === "prefix") {
