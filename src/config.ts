@@ -2,21 +2,20 @@
  * Check if an value is an array and only filled with strings.
  */
 function checkArray(arr: unknown | undefined) {
-	return arr !== undefined && Array.isArray(arr) && !arr.some(val => typeof val !== "string");
+	return arr !== undefined && Array.isArray(arr) && !arr.some((val) => typeof val !== "string");
 }
 
 /**
  * The plugin's configuration.
  */
 export interface PluginConfig {
-	useRojo: boolean,
-	convertExistingImports: boolean,
-	client: string[],
-	server: string[],
-	mode: "remove" | "prefix",
-	diagnosticsMode: "off" | "warning" | "error" | "message"
+	useRojo: boolean;
+	convertExistingImports: boolean;
+	client: string[];
+	server: string[];
+	mode: "remove" | "prefix";
+	diagnosticsMode: "off" | "warning" | "error" | "message";
 }
-
 
 /**
  * Get the PluginConfig with sanity checks and default values.
@@ -29,6 +28,8 @@ export function getConfig(config: any): PluginConfig {
 		convertExistingImports: false,
 		client: typeof config.client === "string" ? [config.client] : checkArray(config.client) ? config.client : [],
 		server: typeof config.server === "string" ? [config.server] : checkArray(config.server) ? config.server : [],
-		diagnosticsMode: ["off", "warning", "error", "message"].includes(config.diagnosticsMode) ? config.diagnosticsMode : "warning"
-	}
+		diagnosticsMode: ["off", "warning", "error", "message"].includes(config.diagnosticsMode)
+			? config.diagnosticsMode
+			: "warning",
+	};
 }

@@ -1,30 +1,30 @@
 import { IMPORT_PATTERN } from "../constants";
 import { expect } from "../expect";
 import { Provider } from "../provider";
-import path from "path";
+import ts from "typescript";
 
 type LineInfo = {
-	text: string,
-	start: number,
-	end: number,
-	len: number,
-	lineNumber: number,
-}
+	text: string;
+	start: number;
+	end: number;
+	len: number;
+	lineNumber: number;
+};
 
 type ImportInfo = {
-	identifiers: string[],
-	path: string,
-	absolutePath: string,
-	typeOnly: boolean,
-	start: number,
-	end: number
-}
+	identifiers: string[];
+	path: string;
+	absolutePath: string;
+	typeOnly: boolean;
+	start: number;
+	end: number;
+};
 
 type SeekResult = {
-	len: number,
-	start: number,
-	end: number
-}
+	len: number;
+	start: number;
+	end: number;
+};
 
 export class SourceFile {
 	public snapshot: ts.IScriptSnapshot;
@@ -51,14 +51,17 @@ export class SourceFile {
 	getImport(start: number, end: number = this.inner.getLineEndOfPosition(start)): ImportInfo | undefined {
 		const lineMatch = IMPORT_PATTERN.exec(this.getTextRange(start, end).trim());
 		if (lineMatch) {
-			const identifiers = lineMatch[2].split(",").map(x => x.trim()).filter(x => !/\s/.test(x));
+			const identifiers = lineMatch[2]
+				.split(",")
+				.map((x) => x.trim())
+				.filter((x) => !/\s/.test(x));
 			return {
 				path: lineMatch[3],
 				absolutePath: this.transformImportPath(lineMatch[3]),
 				typeOnly: lineMatch[1] === "type" ? true : false,
 				identifiers,
 				start,
-				end
+				end,
 			};
 		}
 	}
@@ -80,7 +83,7 @@ export class SourceFile {
 		return imports;
 	}
 
-	getLines(depth: number = 100) {
+	getLines() {
 		const lines: LineInfo[] = [];
 		for (const start of this.inner.getLineStarts()) {
 			const end = this.inner.getLineEndOfPosition(start);
@@ -90,17 +93,17 @@ export class SourceFile {
 				end,
 				len,
 				lineNumber: lines.length,
-				text: this.getText(start, len)
+				text: this.getText(start, len),
 			});
 		}
 		return lines;
 	}
 
-	seek(start: number, text: string, direction: 1 | -1, maxDepth: number = 100): SeekResult | undefined {
+	seek(start: number, text: string, direction: 1 | -1, maxDepth = 100): SeekResult | undefined {
 		if (text.length === 0) return { start, end: start, len: text.length };
 
 		for (let n = 0; n < maxDepth; n++) {
-			const seekStart = start + (n * direction);
+			const seekStart = start + n * direction;
 			const seekEnd = seekStart + text.length - 1;
 
 			if (seekStart < 0) return;
@@ -111,8 +114,8 @@ export class SourceFile {
 				return {
 					start: seekStart,
 					end: seekEnd,
-					len: text.length
-				}
+					len: text.length,
+				};
 			}
 		}
 	}
