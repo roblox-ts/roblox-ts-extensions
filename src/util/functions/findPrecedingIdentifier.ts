@@ -11,12 +11,12 @@ export function findPrecedingIdentifier(
 		switch (precedingToken.kind) {
 			case ts.SyntaxKind.DotToken:
 			case ts.SyntaxKind.QuestionDotToken:
-				const newPrecedingToken = ts.findPrecedingToken(precedingToken.getFullStart() - 1, sourceFile);
+				const newPrecedingToken = ts.findPrecedingToken(precedingToken.getFullStart(), sourceFile);
 				precedingIdentifier = newPrecedingToken;
 				break;
 			case ts.SyntaxKind.Identifier:
 				if (isFirstIteration) {
-					return findPrecedingIdentifier(precedingToken.getFullStart() - 1, sourceFile, false);
+					return findPrecedingIdentifier(precedingToken.getFullStart(), sourceFile, false);
 				}
 				precedingIdentifier = precedingToken;
 				break;
