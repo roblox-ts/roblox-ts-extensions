@@ -8,19 +8,11 @@ import Ajv from "ajv";
 import fs from "fs-extra";
 import path from "path";
 import { Lazy } from "./lazy";
-import {
-	CLIENT_SUBEXT,
-	INIT_NAME,
-	JSON_EXT,
-	LUA_EXT,
-	MODULE_SUBEXT,
-	PACKAGE_ROOT,
-	SERVER_SUBEXT,
-} from "../constants";
+import { CLIENT_SUBEXT, INIT_NAME, JSON_EXT, LUA_EXT, MODULE_SUBEXT, PACKAGE_ROOT, SERVER_SUBEXT } from "../constants";
 import { isPathDescendantOf } from "./fsUtil";
 import { arrayStartsWith } from "./arrayStartsWith";
 
-const warn = (...args: any) => { };
+const warn = (...args: any) => {};
 
 interface RojoTreeProperty {
 	Type: string;
@@ -195,7 +187,7 @@ export class RojoResolver {
 			this.isGame = true;
 		}
 
-		for (const childName of Object.keys(tree).filter(v => !v.startsWith("$"))) {
+		for (const childName of Object.keys(tree).filter((v) => !v.startsWith("$"))) {
 			this.parseTree(basePath, childName, tree[childName]);
 		}
 
