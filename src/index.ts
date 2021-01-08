@@ -25,10 +25,11 @@ enum NetworkBoundary {
 
 export = function init(modules: { typescript: typeof ts }) {
 	const ts = modules.typescript;
+	let provider: Provider;
 	function create(info: PluginCreateInfo) {
 		const service = info.languageService;
 		const serviceProxy = createProxy(service);
-		const provider = new Provider(createConstants(info), serviceProxy, service, info);
+		provider = new Provider(createConstants(info), serviceProxy, service, info);
 		const {
 			config,
 			currentDirectory,
@@ -40,12 +41,10 @@ export = function init(modules: { typescript: typeof ts }) {
 		} = provider.constants;
 
 		let rojoResolver: RojoResolver;
-		if (config.useRojo) {
-			const rojoConfig = RojoResolver.findRojoConfigFilePath(currentDirectory);
-			if (rojoConfig) {
-				log("Found rojoConfig: " + rojoConfig);
-				rojoResolver = RojoResolver.fromPath(rojoConfig);
-			}
+		const rojoConfig = RojoResolver.findRojoConfigFilePath(currentDirectory);
+		if (rojoConfig) {
+			log("Found rojoConfig: " + rojoConfig);
+			rojoResolver = RojoResolver.fromPath(rojoConfig);
 		}
 
 		/**
@@ -65,7 +64,7 @@ export = function init(modules: { typescript: typeof ts }) {
 			if (file.length === 0) return NetworkBoundary.Shared;
 			if (isInDirectories(file, config.client)) return NetworkBoundary.Client;
 			if (isInDirectories(file, config.server)) return NetworkBoundary.Server;
-			if (rojoResolver) {
+			if (config.useRojo) {
 				const rbxPath = rojoResolver.getRbxPathFromFilePath(pathTranslator.getOutputPath(file));
 				if (rbxPath) {
 					const networkType = rojoResolver.getNetworkType(rbxPath);
@@ -87,6 +86,7 @@ export = function init(modules: { typescript: typeof ts }) {
 		 * @param entry The entry to retrieve.
 		 */
 		function getEntryDetails(file: string, pos: number, source: string, entry: string) {
+			console.log(file, pos, source, entry);
 			return service.getCompletionEntryDetails(file, pos, entry, formatOptions, source, userPreferences);
 		}
 
@@ -316,5 +316,13 @@ export = function init(modules: { typescript: typeof ts }) {
 		return serviceProxy;
 	}
 
-	return { create };
+	function onConfigurationChanged(config: any) {
+		if (!provider) throw "NO PROVIDER";
+		if (provider) {
+			console.log(config);
+			Object.assign(provider.constants.config, config);
+		}
+	}
+
+	return { create, onConfigurationChanged };
 };
