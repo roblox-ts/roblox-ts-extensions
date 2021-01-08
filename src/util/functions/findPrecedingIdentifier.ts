@@ -8,9 +8,6 @@ export function findPrecedingIdentifier(
 	const precedingToken = ts.findPrecedingToken(pos, sourceFile);
 	let precedingIdentifier: ts.Node | undefined;
 	if (precedingToken) {
-		if (ts.isIdentifier(precedingToken)) {
-			console.log("preceding token", precedingToken.text);
-		}
 		switch (precedingToken.kind) {
 			case ts.SyntaxKind.DotToken:
 			case ts.SyntaxKind.QuestionDotToken:
