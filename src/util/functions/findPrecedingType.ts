@@ -6,14 +6,10 @@ export function findPrecedingType(
 	sourceFile: ts.SourceFile,
 ): ts.Type | undefined {
 	const precedingToken = ts.findPrecedingToken(pos, sourceFile);
-	let precedingType: ts.Type | undefined;
 	if (precedingToken) {
 		const { parent } = precedingToken;
 		if (ts.isPropertyAccessExpression(parent) || ts.isElementAccessExpression(parent)) {
-			precedingType = typeChecker.getTypeAtLocation(parent.expression);
+			return typeChecker.getTypeAtLocation(parent.expression);
 		}
-	}
-	if (precedingType) {
-		return precedingType;
 	}
 }
