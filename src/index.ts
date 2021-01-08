@@ -15,7 +15,7 @@ import { createConstants, Diagnostics } from "./util/constants";
 import { PluginCreateInfo } from "./types";
 import { isNodeInternal } from "./util/functions/isNodeInternal";
 import { normalizeType } from "./util/functions/normalizeType";
-import { findPrecedingIdentifier } from "./util/functions/findPrecedingIdentifier";
+import { findPrecedingType } from "./util/functions/findPrecedingType";
 
 enum NetworkBoundary {
 	Client = "Client",
@@ -205,21 +205,19 @@ export = function init(modules: { typescript: typeof ts }) {
 			if (orig) {
 				let shouldRemoveNominal = false;
 				const sourceFile = provider.getSourceFile(file);
+				const typeChecker = provider.program.getTypeChecker();
 				if (sourceFile) {
-					const nodeAtLoc = findPrecedingIdentifier(pos, sourceFile.inner);
-					if (nodeAtLoc) {
-						const type = provider.program.getTypeChecker().getTypeAtLocation(nodeAtLoc);
-						if (type) {
-							normalizeType(type).forEach((subtype) => {
-								if (subtype.symbol) {
-									for (const x of subtype.symbol.declarations) {
-										if (isNodeInternal(provider, x)) {
-											shouldRemoveNominal = true;
-										}
+					const type = findPrecedingType(typeChecker, pos, sourceFile.inner);
+					if (type) {
+						normalizeType(type).forEach((subtype) => {
+							if (subtype.symbol) {
+								for (const x of subtype.symbol.declarations) {
+									if (isNodeInternal(provider, x)) {
+										shouldRemoveNominal = true;
 									}
 								}
-							});
-						}
+							}
+						});
 					}
 				}
 				const entries: ts.CompletionEntry[] = [];
