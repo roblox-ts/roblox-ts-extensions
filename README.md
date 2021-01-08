@@ -29,6 +29,11 @@ interface PluginConfig {
 	// Whether to use Rojo to calculate server/client boundaries. The client and server properties can override certain directories if necessary.
 	// Default: true
 	useRojo: boolean;
+
+	// What should non-type only cross-boundary imports be flagged as.
+	// Set to off to disable diagnostics.
+	// Default: warning
+	diagnosticsMode: "off" | "warning" | "error" | "message";
 }
 ```
 

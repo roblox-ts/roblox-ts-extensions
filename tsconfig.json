@@ -1,16 +1,16 @@
 {
 	"compilerOptions": {
-	  "incremental": true,
-	  "target": "esnext",
-	  "module": "commonjs",
-	  "strict": true,
-	  "esModuleInterop": true,
-	  "outDir": "plugin",
-	  "rootDir": "src",
-	  "baseUrl": "src"
+		"incremental": true,
+		"target": "esnext",
+		"module": "commonjs",
+		"strict": true,
+		"esModuleInterop": true,
+		"outDir": "plugin",
+		"rootDir": "src",
+		"baseUrl": "src"
 	},
 	"exclude": [
 		"node_modules",
 		"plugin"
 	]
-  }
+}
