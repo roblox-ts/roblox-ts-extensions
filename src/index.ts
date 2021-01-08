@@ -13,6 +13,9 @@ import { createProxy } from "./createProxy";
 import { Provider } from "./util/provider";
 import { createConstants, Diagnostics } from "./util/constants";
 import { PluginCreateInfo } from "./types";
+import { isNodeInternal } from "./util/functions/isNodeInternal";
+import { normalizeType } from "./util/functions/normalizeType";
+import { findPrecedingIdentifier } from "./util/functions/findPrecedingIdentifier";
 
 enum NetworkBoundary {
 	Client = "Client",
@@ -200,6 +203,25 @@ export = function init(modules: { typescript: typeof ts }) {
 			const boundary = getNetworkBoundary(file);
 			const orig = service.getCompletionsAtPosition(file, pos, opt);
 			if (orig) {
+				let shouldRemoveNominal = false;
+				const sourceFile = provider.getSourceFile(file);
+				if (sourceFile) {
+					const nodeAtLoc = findPrecedingIdentifier(pos, sourceFile.inner);
+					if (nodeAtLoc) {
+						const type = provider.program.getTypeChecker().getTypeAtLocation(nodeAtLoc);
+						if (type) {
+							normalizeType(type).forEach((subtype) => {
+								if (subtype.symbol) {
+									for (const x of subtype.symbol.declarations) {
+										if (isNodeInternal(provider, x)) {
+											shouldRemoveNominal = true;
+										}
+									}
+								}
+							});
+						}
+					}
+				}
 				const entries: ts.CompletionEntry[] = [];
 				orig.entries.forEach((v) => {
 					if (isAutoImport(file, pos, v)) {
@@ -210,7 +232,7 @@ export = function init(modules: { typescript: typeof ts }) {
 								v.name = completionBoundary + ": " + v.name;
 							} else if (config.mode === "remove") return;
 						}
-					}
+					} else if (shouldRemoveNominal && v.name.startsWith("_nominal_")) return;
 					entries.push(v);
 				});
 				orig.entries = entries;
