@@ -1,4 +1,4 @@
-# Roblox-TS Extensions
+# roblox-ts Extensions
 This is a Language Service plugin that changes autocompletes based on their network boundary (server / shared)
 Currently this only has the aforementioned functionality, however, I do plan to add more in the future so feel free to file an issue.
 
