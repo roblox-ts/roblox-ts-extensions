@@ -64,7 +64,7 @@ export = function init(modules: { typescript: typeof ts }) {
 			if (file.length === 0) return NetworkBoundary.Shared;
 			if (isInDirectories(file, config.client)) return NetworkBoundary.Client;
 			if (isInDirectories(file, config.server)) return NetworkBoundary.Server;
-			if (config.useRojo) {
+			if (config.useRojo && rojoResolver) {
 				const rbxPath = rojoResolver.getRbxPathFromFilePath(pathTranslator.getOutputPath(file));
 				if (rbxPath) {
 					const networkType = rojoResolver.getNetworkType(rbxPath);
