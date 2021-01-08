@@ -1,19 +1,18 @@
-
 /**
-* Language service plugin
-*/
+ * Language service plugin
+ */
 
 "use strict";
 
-import { } from "ts-expose-internals";
-import * as tssl from "typescript/lib/tsserverlibrary";
+import {} from "ts-expose-internals";
 import * as ts from "typescript";
-import * as path from 'path';
+import * as path from "path";
 import { NetworkType, RojoResolver } from "./Rojo/RojoResolver";
 import { isPathDescendantOf } from "./Rojo/RojoResolver/fsUtil";
 import { createProxy } from "./createProxy";
 import { Provider } from "./util/provider";
 import { createConstants, Diagnostics } from "./util/constants";
+import { PluginCreateInfo } from "./types";
 
 enum NetworkBoundary {
 	Client = "Client",
@@ -23,7 +22,7 @@ enum NetworkBoundary {
 
 export = function init(modules: { typescript: typeof ts }) {
 	const ts = modules.typescript;
-	function create(info: tssl.server.PluginCreateInfo) {
+	function create(info: PluginCreateInfo) {
 		const service = info.languageService;
 		const serviceProxy = createProxy(service);
 		const provider = new Provider(createConstants(info), serviceProxy, service, info);
@@ -34,7 +33,7 @@ export = function init(modules: { typescript: typeof ts }) {
 			userPreferences,
 			pathTranslator,
 			srcDir,
-			log
+			log,
 		} = provider.constants;
 
 		let rojoResolver: RojoResolver;
@@ -52,7 +51,7 @@ export = function init(modules: { typescript: typeof ts }) {
 		 * @param directories The directories.
 		 */
 		function isInDirectories(file: string, directories: string[]): boolean {
-			return directories.some(directory => isPathDescendantOf(file, path.join(currentDirectory, directory)));
+			return directories.some((directory) => isPathDescendantOf(file, path.join(currentDirectory, directory)));
 		}
 
 		/**
@@ -94,14 +93,23 @@ export = function init(modules: { typescript: typeof ts }) {
 		 * @param pos The position.
 		 * @param entry The entry to check.
 		 */
-		function isAutoImport(file: string, pos: number, entry: ts.CompletionEntry): entry is ts.CompletionEntry & { source: string } {
+		function isAutoImport(
+			file: string,
+			pos: number,
+			entry: ts.CompletionEntry,
+		): entry is ts.CompletionEntry & { source: string } {
 			const newImport = /^Import '.*' from module/;
 			const existingImport = /^Add '.*' to existing import declaration from/;
 			if (entry.hasAction && entry.source && entry.source.length > 0) {
-				if (isPathDescendantOf(entry.source, srcDir) && !isPathDescendantOf(entry.source, path.join(currentDirectory, "node_modules"))) {
+				if (
+					isPathDescendantOf(entry.source, srcDir) &&
+					!isPathDescendantOf(entry.source, path.join(currentDirectory, "node_modules"))
+				) {
 					const actions = getEntryDetails(file, pos, entry.source, entry.name);
 					if (actions && actions.codeActions) {
-						return actions.codeActions.some((value) => value.description.match(newImport) || value.description.match(existingImport));
+						return actions.codeActions.some(
+							(value) => value.description.match(newImport) || value.description.match(existingImport),
+						);
 					}
 				}
 			}
@@ -114,45 +122,50 @@ export = function init(modules: { typescript: typeof ts }) {
 		 * @param to The boundary of the auto-complete.
 		 */
 		function BoundaryCanSee(from: NetworkBoundary, to: NetworkBoundary) {
-			return from === to || (to === NetworkBoundary.Shared);
+			return from === to || to === NetworkBoundary.Shared;
 		}
 
 		serviceProxy["getSemanticDiagnostics"] = (file) => {
-			let orig = service.getSemanticDiagnostics(file);
+			const orig = service.getSemanticDiagnostics(file);
 			if (config.diagnosticsMode !== "off") {
-				const diagnosticsCategory = ({
+				const diagnosticsCategory = {
 					["warning"]: ts.DiagnosticCategory.Warning,
 					["error"]: ts.DiagnosticCategory.Error,
-					["message"]: ts.DiagnosticCategory.Message
-				})[config.diagnosticsMode];
+					["message"]: ts.DiagnosticCategory.Message,
+				}[config.diagnosticsMode];
 
 				const currentBoundary = getNetworkBoundary(file);
 				const sourceFile = provider.getSourceFile(file);
-				sourceFile.getImports().filter(x => !x.typeOnly).forEach(($import) => {
-					const importBoundary = getNetworkBoundary($import.absolutePath);
-					if (!BoundaryCanSee(currentBoundary, importBoundary)) {
-						orig.push({
-							category: diagnosticsCategory,
-							code: Diagnostics.CrossBoundaryImport,
-							file: sourceFile.inner,
-							messageText: `Cannot import ${importBoundary} module from ${currentBoundary}`,
-							start: $import.start,
-							length: $import.end - $import.start
-						});
-					}
-				});
+				sourceFile
+					.getImports()
+					.filter((x) => !x.typeOnly)
+					.forEach(($import) => {
+						const importBoundary = getNetworkBoundary($import.absolutePath);
+						if (!BoundaryCanSee(currentBoundary, importBoundary)) {
+							orig.push({
+								category: diagnosticsCategory,
+								code: Diagnostics.CrossBoundaryImport,
+								file: sourceFile.inner,
+								messageText: `Cannot import ${importBoundary} module from ${currentBoundary}`,
+								start: $import.start,
+								length: $import.end - $import.start,
+							});
+						}
+					});
 			}
 
 			return orig;
-		}
+		};
 
 		serviceProxy["getCodeFixesAtPosition"] = (file, start, end, codes, formatOptions, preferences) => {
 			let orig = service.getCodeFixesAtPosition(file, start, end, codes, formatOptions, preferences);
 
-			const semanticDiagnostics = serviceProxy.getSemanticDiagnostics(file).filter(x => Diagnostics[x.code] !== undefined);
-			semanticDiagnostics.forEach(diag => {
+			const semanticDiagnostics = serviceProxy
+				.getSemanticDiagnostics(file)
+				.filter((x) => Diagnostics[x.code] !== undefined);
+			semanticDiagnostics.forEach((diag) => {
 				if (diag.start !== undefined && diag.length !== undefined) {
-					if (start >= diag.start && end <= (diag.start + diag.length)) {
+					if (start >= diag.start && end <= diag.start + diag.length) {
 						const sourceFile = provider.getSourceFile(file);
 						const $import = sourceFile.getImport(diag.start, diag.start + diag.length);
 						if ($import) {
@@ -167,28 +180,28 @@ export = function init(modules: { typescript: typeof ts }) {
 											textChanges: [
 												{
 													newText: "import type",
-													span: ts.createTextSpan($import.start, 6)
-												}
-											]
-										}
-									]
+													span: ts.createTextSpan($import.start, 6),
+												},
+											],
+										},
+									],
 								},
-								...orig
-							]
+								...orig,
+							];
 						}
 					}
 				}
 			});
 
 			return orig;
-		}
+		};
 
 		serviceProxy["getCompletionsAtPosition"] = (file, pos, opt) => {
 			const boundary = getNetworkBoundary(file);
-			let orig = service.getCompletionsAtPosition(file, pos, opt);
+			const orig = service.getCompletionsAtPosition(file, pos, opt);
 			if (orig) {
 				const entries: ts.CompletionEntry[] = [];
-				orig.entries.forEach(v => {
+				orig.entries.forEach((v) => {
 					if (isAutoImport(file, pos, v)) {
 						const completionBoundary = getNetworkBoundary(v.source);
 						if (!BoundaryCanSee(boundary, completionBoundary)) {
@@ -203,12 +216,19 @@ export = function init(modules: { typescript: typeof ts }) {
 				orig.entries = entries;
 			}
 			return orig;
-		}
+		};
 
 		serviceProxy["getCompletionEntryDetails"] = (file, pos, entry, formatOptions, source, preferences) => {
 			const match = entry.match(/^(Server|Shared|Client): (\w+)$/);
 			if (match && match[2] && source) {
-				const result = service.getCompletionEntryDetails(file, pos, match[2], formatOptions, source, preferences);
+				const result = service.getCompletionEntryDetails(
+					file,
+					pos,
+					match[2],
+					formatOptions,
+					source,
+					preferences,
+				);
 				if (result && result.codeActions && result.codeActions.length > 0) {
 					const boundary = getNetworkBoundary(file);
 					const completionBoundary = getNetworkBoundary(source);
@@ -218,13 +238,18 @@ export = function init(modules: { typescript: typeof ts }) {
 								for (const change of x.changes) {
 									if (change.fileName === file) {
 										for (const textChange of change.textChanges) {
-											textChange.newText = textChange.newText.replace(/import {(.*)}/, "import type {$1}");
+											textChange.newText = textChange.newText.replace(
+												/import {(.*)}/,
+												"import type {$1}",
+											);
 										}
 									}
 								}
-							} else if (x.description.match(/^Add '.*' to existing import declaration from/) && config.convertExistingImports) {
-							out:
-								for (const change of x.changes) {
+							} else if (
+								x.description.match(/^Add '.*' to existing import declaration from/) &&
+								config.convertExistingImports
+							) {
+								out: for (const change of x.changes) {
 									if (change.fileName === file) {
 										const importDecl = change.textChanges[0];
 										if (importDecl) {
@@ -236,9 +261,9 @@ export = function init(modules: { typescript: typeof ts }) {
 													textChanges: [
 														{
 															newText: "import type",
-															span: ts.createTextSpan(seek.start, seek.len)
-														}
-													]
+															span: ts.createTextSpan(seek.start, seek.len),
+														},
+													],
 												});
 												break out;
 											}
@@ -252,15 +277,15 @@ export = function init(modules: { typescript: typeof ts }) {
 				return result;
 			}
 			return service.getCompletionEntryDetails(file, pos, entry, formatOptions, source, preferences);
-		}
+		};
 
 		// Thank you, typescript, for not giving a proper api for registering a codefix.
 		for (const x in Diagnostics) {
 			const diag = Diagnostics[x];
 			if (typeof diag === "number") {
-				ts.codefix.registerCodeFix({
+				(ts as any).codefix.registerCodeFix({
 					errorCodes: [diag],
-					getCodeActions: () => undefined
+					getCodeActions: () => undefined,
 				});
 			}
 		}
@@ -270,4 +295,4 @@ export = function init(modules: { typescript: typeof ts }) {
 	}
 
 	return { create };
-}
+};
