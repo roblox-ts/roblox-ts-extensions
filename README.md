@@ -2,6 +2,9 @@
 This is a Language Service plugin that changes autocompletes based on their network boundary (server / shared)
 Currently this only has the aforementioned functionality, however, I do plan to add more in the future so feel free to file an issue.
 
+## Visual Studio Code
+If you use Visual Studio Code, it's recommended that you install this using [our extension.](https://marketplace.visualstudio.com/items?itemName=Roblox-TS.vscode-roblox-ts)
+
 ## Installation
 You install this like you would any npm package.
 
