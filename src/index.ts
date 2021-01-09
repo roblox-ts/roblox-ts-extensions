@@ -310,7 +310,7 @@ export = function init(modules: { typescript: typeof ts }) {
 			}
 		}
 
-		log("Roblox-TS language extensions has loaded.");
+		log("roblox-ts language extensions has loaded.");
 		return serviceProxy;
 	}
 

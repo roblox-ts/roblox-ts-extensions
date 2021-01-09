@@ -11,7 +11,7 @@ export function createConstants(info: PluginCreateInfo) {
 	const srcDir = compilerOptions.rootDir ?? currentDirectory;
 	const pathTranslator = new PathTranslator(srcDir, outDir, undefined, false);
 	const config = getConfig(info.config);
-	const log = (arg: string) => info.project.projectService.logger.info("[Roblox-TS Extensions]: " + arg);
+	const log = (arg: string) => info.project.projectService.logger.info("[roblox-ts Extensions]: " + arg);
 
 	return {
 		config,

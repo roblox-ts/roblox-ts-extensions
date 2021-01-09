@@ -1,9 +1,3 @@
-/**
- * Roblox-TS' RojoResolver.
- * https://github.com/roblox-ts/roblox-ts/blob/master/src/Shared/classes/RojoResolver.ts
- * Full credits to Osyris and Roblox-TS.
- */
-
 import Ajv from "ajv";
 import fs from "fs-extra";
 import path from "path";

@@ -1,9 +1,3 @@
-/**
- * Roblox-TS' PathTranslator.
- * https://github.com/roblox-ts/roblox-ts/blob/master/src/Shared/classes/PathTranslator.ts
- * Full credits to Osyris and Roblox-TS.
- */
-
 import path from "path";
 import { D_EXT, INDEX_NAME, INIT_NAME, LUA_EXT, TSX_EXT, TS_EXT } from "../constants";
 import { assert } from "./assert";
