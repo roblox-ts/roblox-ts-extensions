@@ -1,13 +1,13 @@
 {
 	"name": "roblox-ts-extensions",
 	"version": "1.1.7",
-	"description": "A Language Service plugin to emphasize the client/server network boundary when using Roblox-TS.",
+	"description": "A Language Service plugin to emphasize the client/server network boundary when using roblox-ts.",
 	"main": "index.js",
 	"author": "Fireboltofdeath <fireboltofpublic@gmail.com> (https://github.com/Fireboltofdeath)",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Fireboltofdeath/Roblox-TS-Extensions.git"
+		"url": "https://github.com/roblox-ts/roblox-ts-extensions.git"
 	},
 	"scripts": {
 		"build": "tsc"
