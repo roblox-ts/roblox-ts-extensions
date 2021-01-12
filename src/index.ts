@@ -310,6 +310,27 @@ export = function init(modules: { typescript: typeof ts }) {
 			}
 		}
 
+		// If roblox-ts-extensions fails, this code will fallback to the original method.
+		for (const key in serviceProxy) {
+			const method = (serviceProxy as any)[key];
+			const originalMethod = (service as any)[key];
+			if (method && originalMethod) {
+				(serviceProxy as any)[key] = function () {
+					try {
+						return method.apply(service, arguments);
+					} catch (err) {
+						if (err instanceof Error) {
+							console.error(`[roblox-ts error] ${key}`, `${err.stack ?? err.message}`);
+						}
+						return originalMethod.apply(service, arguments);
+					}
+				};
+			}
+		}
+
+		// Add any unimplemented default methods.
+		serviceProxy.addProxyMethods();
+
 		log("roblox-ts language extensions has loaded.");
 		return serviceProxy;
 	}
