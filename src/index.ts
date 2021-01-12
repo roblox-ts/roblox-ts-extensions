@@ -170,7 +170,7 @@ export = function init(modules: { typescript: typeof ts }) {
 				if (diag.start !== undefined && diag.length !== undefined) {
 					if (start >= diag.start && end <= diag.start + diag.length) {
 						const sourceFile = provider.getSourceFile(file);
-						const $import = sourceFile.getImport(diag.start, diag.start + diag.length);
+						const $import = sourceFile.getImport(diag.start);
 						if ($import) {
 							orig = [
 								{
@@ -269,7 +269,7 @@ export = function init(modules: { typescript: typeof ts }) {
 								x.description.match(/^Add '.*' to existing import declaration from/) &&
 								config.convertExistingImports
 							) {
-								out: for (const change of x.changes) {
+								for (const change of x.changes) {
 									if (change.fileName === file) {
 										const importDecl = change.textChanges[0];
 										if (importDecl) {
@@ -285,7 +285,7 @@ export = function init(modules: { typescript: typeof ts }) {
 														},
 													],
 												});
-												break out;
+												break;
 											}
 										}
 									}

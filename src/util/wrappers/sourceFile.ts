@@ -1,7 +1,7 @@
-import { IMPORT_PATTERN } from "../constants";
 import { expect } from "../expect";
 import { Provider } from "../provider";
 import ts from "typescript";
+import { assert } from "../../Rojo/PathTranslator/assert";
 
 type LineInfo = {
 	text: string;
@@ -12,7 +12,6 @@ type LineInfo = {
 };
 
 type ImportInfo = {
-	identifiers: string[];
 	path: string;
 	absolutePath: string;
 	typeOnly: boolean;
@@ -48,35 +47,35 @@ export class SourceFile {
 		return this.provider.transformImportPath(this.inner.fileName, importPath);
 	}
 
-	getImport(start: number, end: number = this.inner.getLineEndOfPosition(start)): ImportInfo | undefined {
-		const lineMatch = IMPORT_PATTERN.exec(this.getTextRange(start, end).trim());
-		if (lineMatch) {
-			const identifiers = lineMatch[2]
-				.split(",")
-				.map((x) => x.trim())
-				.filter((x) => !/\s/.test(x));
-			return {
-				path: lineMatch[3],
-				absolutePath: this.transformImportPath(lineMatch[3]),
-				typeOnly: lineMatch[1] === "type" ? true : false,
-				identifiers,
-				start,
-				end,
-			};
+	getImportInfo(declaration: ts.ImportDeclaration) {
+		const { moduleSpecifier, importClause } = declaration;
+		assert(importClause && ts.isStringLiteral(moduleSpecifier));
+		const path = moduleSpecifier.text;
+		return {
+			path,
+			absolutePath: this.transformImportPath(path),
+			typeOnly: importClause.isTypeOnly,
+			end: declaration.getEnd(),
+			start: declaration.getStart(),
+		};
+	}
+
+	getImport(pos: number): ImportInfo | undefined {
+		const node = ts.getTokenAtPosition(this.inner, pos);
+		const importDeclaration = ts.findAncestor(node, (decl): decl is ts.ImportDeclaration =>
+			ts.isImportDeclaration(decl),
+		);
+		if (importDeclaration) {
+			return this.getImportInfo(importDeclaration);
 		}
 	}
 
 	getImports() {
 		const imports: ImportInfo[] = [];
 
-		let linesWithoutMatch = 0;
-		for (const line of this.getLines()) {
-			if (linesWithoutMatch >= 10) break;
-			linesWithoutMatch++;
-
-			const lineImport = this.getImport(line.start, line.end);
-			if (lineImport) {
-				imports.push(lineImport);
+		for (const statement of this.inner.statements) {
+			if (ts.isImportDeclaration(statement)) {
+				imports.push(this.getImportInfo(statement));
 			}
 		}
 
