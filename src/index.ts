@@ -30,15 +30,7 @@ export = function init(modules: { typescript: typeof ts }) {
 		const service = info.languageService;
 		const serviceProxy = createProxy(service);
 		provider = new Provider(createConstants(info), serviceProxy, service, info);
-		const {
-			config,
-			currentDirectory,
-			formatOptions,
-			userPreferences,
-			pathTranslator,
-			srcDir,
-			log,
-		} = provider.constants;
+		const { config, currentDirectory, pathTranslator, srcDir, log } = provider.constants;
 
 		let rojoResolver: RojoResolver;
 		const rojoConfig = RojoResolver.findRojoConfigFilePath(currentDirectory);
@@ -79,18 +71,6 @@ export = function init(modules: { typescript: typeof ts }) {
 		}
 
 		/**
-		 * Retrieve the details for the specified entry.
-		 * @param file The file path.
-		 * @param pos Index of the character where you want entries.
-		 * @param source Source path.
-		 * @param entry The entry to retrieve.
-		 */
-		function getEntryDetails(file: string, pos: number, source: string, entry: string) {
-			console.log(file, pos, source, entry);
-			return service.getCompletionEntryDetails(file, pos, entry, formatOptions, source, userPreferences);
-		}
-
-		/**
 		 * Check if the specified entry is an auto import and is a source file.
 		 * @param file The file path.
 		 * @param pos The position.
@@ -98,22 +78,14 @@ export = function init(modules: { typescript: typeof ts }) {
 		 */
 		function isAutoImport(
 			file: string,
-			pos: number,
 			entry: ts.CompletionEntry,
 		): entry is ts.CompletionEntry & { source: string } {
-			const newImport = /^Import '.*' from module/;
-			const existingImport = /^Add '.*' to existing import declaration from/;
 			if (entry.hasAction && entry.source && entry.source.length > 0) {
 				if (
 					isPathDescendantOf(entry.source, srcDir) &&
 					!isPathDescendantOf(entry.source, path.join(currentDirectory, "node_modules"))
 				) {
-					const actions = getEntryDetails(file, pos, entry.source, entry.name);
-					if (actions && actions.codeActions) {
-						return actions.codeActions.some(
-							(value) => value.description.match(newImport) || value.description.match(existingImport),
-						);
-					}
+					return entry.source !== path.basename(file);
 				}
 			}
 			return false;
@@ -222,7 +194,7 @@ export = function init(modules: { typescript: typeof ts }) {
 				}
 				const entries: ts.CompletionEntry[] = [];
 				orig.entries.forEach((v) => {
-					if (isAutoImport(file, pos, v)) {
+					if (isAutoImport(file, v)) {
 						const completionBoundary = getNetworkBoundary(v.source);
 						if (!BoundaryCanSee(boundary, completionBoundary)) {
 							if (config.mode === "prefix") {
