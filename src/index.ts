@@ -175,18 +175,25 @@ export = function init(modules: { typescript: typeof ts }) {
 			const boundary = getNetworkBoundary(file);
 			const orig = service.getCompletionsAtPosition(file, pos, opt);
 			if (orig) {
-				let shouldRemoveNominal = false;
+				const removedProperties = new Set<string>();
 				const sourceFile = provider.getSourceFile(file);
 				const typeChecker = provider.program.getTypeChecker();
 				if (sourceFile) {
 					const type = findPrecedingType(typeChecker, pos, sourceFile.inner);
 					if (type) {
 						normalizeType(type).forEach((subtype) => {
-							if (subtype.symbol) {
-								for (const x of subtype.symbol.declarations) {
-									if (isNodeInternal(provider, x)) {
-										shouldRemoveNominal = true;
+							for (const x of subtype.getApparentProperties()) {
+								const isInternal =
+									x.declarations?.some((declaration) => isNodeInternal(provider, declaration)) ??
+									false;
+								if (x.name === "prototype") {
+									if (!x.declarations || isInternal) {
+										removedProperties.add("prototype");
 									}
+								} else if (x.name.startsWith("_nominal_") && isInternal) {
+									removedProperties.add(x.name);
+								} else if (x.name === "LUA_THREAD" && isInternal) {
+									removedProperties.add(x.name);
 								}
 							}
 						});
@@ -202,7 +209,7 @@ export = function init(modules: { typescript: typeof ts }) {
 								v.name = completionBoundary + ": " + v.name;
 							} else if (config.mode === "remove") return;
 						}
-					} else if (shouldRemoveNominal && v.name.startsWith("_nominal_")) return;
+					} else if (removedProperties.has(v.name)) return;
 					entries.push(v);
 				});
 				orig.entries = entries;
