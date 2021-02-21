@@ -201,6 +201,8 @@ export = function init(modules: { typescript: typeof ts }) {
 				}
 				const entries: ts.CompletionEntry[] = [];
 				orig.entries.forEach((v) => {
+					const modifiers = v.kindModifiers?.split(",") ?? [];
+					if (modifiers.includes("deprecated") && config.hideDeprecated) return;
 					if (isAutoImport(file, v)) {
 						const completionBoundary = getNetworkBoundary(v.source);
 						if (!BoundaryCanSee(boundary, completionBoundary)) {

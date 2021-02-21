@@ -1,9 +1,4 @@
-/**
- * Check if an value is an array and only filled with strings.
- */
-function checkArray(arr: unknown | undefined) {
-	return arr !== undefined && Array.isArray(arr) && !arr.some((val) => typeof val !== "string");
-}
+import * as z from "zod";
 
 /**
  * The plugin's configuration.
@@ -14,22 +9,39 @@ export interface PluginConfig {
 	client: string[];
 	server: string[];
 	mode: "remove" | "prefix";
+	hideDeprecated: boolean;
 	diagnosticsMode: "off" | "warning" | "error" | "message";
 }
+
+/**
+ * Zod schema for configuration.
+ */
+const CONFIG_SCHEMA = z
+	.object({
+		mode: z.enum(["remove", "prefix"]),
+		useRojo: z.boolean(),
+		client: z.array(z.string()),
+		server: z.array(z.string()),
+		hideDeprecated: z.boolean(),
+		diagnosticsMode: z.enum(["off", "warning", "error", "message"]),
+	})
+	.nonstrict()
+	.partial();
 
 /**
  * Get the PluginConfig with sanity checks and default values.
  * @param config The config directly from the plugin.
  */
-export function getConfig(config: any): PluginConfig {
+export function getConfig(unsafeConfig: any): PluginConfig {
+	const parsedConfig = CONFIG_SCHEMA.safeParse(unsafeConfig);
+	const config = parsedConfig.success ? parsedConfig.data : {};
 	return {
-		mode: config.mode === "remove" ? "remove" : "prefix",
-		useRojo: typeof config.useRojo === "boolean" ? config.useRojo : true,
+		mode: config.mode ?? "prefix",
+		useRojo: config.useRojo ?? true,
 		convertExistingImports: false,
-		client: typeof config.client === "string" ? [config.client] : checkArray(config.client) ? config.client : [],
-		server: typeof config.server === "string" ? [config.server] : checkArray(config.server) ? config.server : [],
-		diagnosticsMode: ["off", "warning", "error", "message"].includes(config.diagnosticsMode)
-			? config.diagnosticsMode
-			: "warning",
+		client: config.client ?? [],
+		server: config.server ?? [],
+		hideDeprecated: config.hideDeprecated ?? false,
+		diagnosticsMode: config.diagnosticsMode ?? "warning",
 	};
 }
