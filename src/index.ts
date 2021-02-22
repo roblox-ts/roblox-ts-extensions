@@ -209,10 +209,6 @@ export = function init(modules: { typescript: typeof ts }) {
 									if (!x.declarations || isInternal) {
 										removedProperties.add("prototype");
 									}
-								} else if (x.name.startsWith("_nominal_") && isInternal) {
-									removedProperties.add(x.name);
-								} else if (x.name === "LUA_THREAD" && isInternal) {
-									removedProperties.add(x.name);
 								} else if (isHidden) {
 									removedProperties.add(x.name);
 								}
