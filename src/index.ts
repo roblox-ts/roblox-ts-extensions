@@ -100,6 +100,27 @@ export = function init(modules: { typescript: typeof ts }) {
 			return from === to || to === NetworkBoundary.Shared;
 		}
 
+		/**
+		 * Check if a node has a specific jsdoc tag.
+		 * @param node The node to check
+		 * @param name The name of the jsdoc tag
+		 */
+		function hasJSDocTag(node: ts.Node, name: string) {
+			return ts.getAllJSDocTags(node, (tag): tag is ts.JSDocTag => tag.tagName.text === name).length > 0;
+		}
+
+		/**
+		 * Check if a list of declarations for internal or hidden variants.
+		 * @param declarations The declarations to check
+		 */
+		function isRemovable(declarations: ts.Declaration[] | undefined): [isInternal: boolean, isHidden: boolean] {
+			if (!declarations) return [false, false];
+			return [
+				declarations.some((declaration) => isNodeInternal(provider, declaration)),
+				declarations.some((declaration) => hasJSDocTag(declaration, "hidden")),
+			];
+		}
+
 		serviceProxy["getSemanticDiagnostics"] = (file) => {
 			const orig = service.getSemanticDiagnostics(file);
 			if (config.diagnosticsMode !== "off") {
@@ -183,9 +204,7 @@ export = function init(modules: { typescript: typeof ts }) {
 					if (type) {
 						normalizeType(type).forEach((subtype) => {
 							for (const x of subtype.getApparentProperties()) {
-								const isInternal =
-									x.declarations?.some((declaration) => isNodeInternal(provider, declaration)) ??
-									false;
+								const [isInternal, isHidden] = isRemovable(x.getDeclarations());
 								if (x.name === "prototype") {
 									if (!x.declarations || isInternal) {
 										removedProperties.add("prototype");
@@ -193,6 +212,8 @@ export = function init(modules: { typescript: typeof ts }) {
 								} else if (x.name.startsWith("_nominal_") && isInternal) {
 									removedProperties.add(x.name);
 								} else if (x.name === "LUA_THREAD" && isInternal) {
+									removedProperties.add(x.name);
+								} else if (isHidden) {
 									removedProperties.add(x.name);
 								}
 							}
