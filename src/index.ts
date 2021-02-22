@@ -313,11 +313,13 @@ export = function init(modules: { typescript: typeof ts }) {
 		}
 
 		// If roblox-ts-extensions fails, this code will fallback to the original method.
+		// If this isn't a roblox-ts project, this code will fallback to the original method.
 		for (const key in serviceProxy) {
 			const method = (serviceProxy as any)[key];
 			const originalMethod = (service as any)[key];
 			if (method && originalMethod) {
 				(serviceProxy as any)[key] = function () {
+					if (!provider.isRbxtsProject()) return originalMethod.apply(service, arguments);
 					try {
 						return method.apply(service, arguments);
 					} catch (err) {
