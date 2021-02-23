@@ -129,8 +129,8 @@ export = function init(modules: { typescript: typeof ts }) {
 
 				const currentBoundary = getNetworkBoundary(file);
 				const sourceFile = provider.getSourceFile(file);
-				sourceFile
-					.getImports()
+				provider
+					.getImports(sourceFile)
 					.filter((x) => !x.typeOnly)
 					.forEach(($import) => {
 						const importBoundary = getNetworkBoundary($import.absolutePath);
@@ -138,7 +138,7 @@ export = function init(modules: { typescript: typeof ts }) {
 							orig.push({
 								category: diagnosticsCategory,
 								code: Diagnostics.CrossBoundaryImport,
-								file: sourceFile.inner,
+								file: sourceFile,
 								messageText: `Cannot import ${importBoundary} module from ${currentBoundary}`,
 								start: $import.start,
 								length: $import.end - $import.start,
@@ -160,7 +160,7 @@ export = function init(modules: { typescript: typeof ts }) {
 				if (diag.start !== undefined && diag.length !== undefined) {
 					if (start >= diag.start && end <= diag.start + diag.length) {
 						const sourceFile = provider.getSourceFile(file);
-						const $import = sourceFile.getImport(diag.start);
+						const $import = provider.findImport(sourceFile, diag.start);
 						if ($import) {
 							orig = [
 								{
@@ -197,7 +197,7 @@ export = function init(modules: { typescript: typeof ts }) {
 				const sourceFile = provider.getSourceFile(file);
 				const typeChecker = provider.program.getTypeChecker();
 				if (sourceFile) {
-					const type = findPrecedingType(typeChecker, pos, sourceFile.inner);
+					const type = findPrecedingType(typeChecker, pos, sourceFile);
 					if (type) {
 						normalizeType(type).forEach((subtype) => {
 							for (const x of subtype.getApparentProperties()) {
