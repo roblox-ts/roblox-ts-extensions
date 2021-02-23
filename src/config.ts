@@ -5,7 +5,6 @@ import * as z from "zod";
  */
 export interface PluginConfig {
 	useRojo: boolean;
-	convertExistingImports: boolean;
 	client: string[];
 	server: string[];
 	mode: "remove" | "prefix";
@@ -38,7 +37,6 @@ export function getConfig(unsafeConfig: any): PluginConfig {
 	return {
 		mode: config.mode ?? "prefix",
 		useRojo: config.useRojo ?? true,
-		convertExistingImports: false,
 		client: config.client ?? [],
 		server: config.server ?? [],
 		hideDeprecated: config.hideDeprecated ?? false,
