@@ -76,16 +76,13 @@ export = function init(modules: { typescript: typeof ts }) {
 		 * @param pos The position.
 		 * @param entry The entry to check.
 		 */
-		function isAutoImport(
-			file: string,
-			entry: ts.CompletionEntry,
-		): entry is ts.CompletionEntry & { source: string } {
-			if (entry.hasAction && entry.source && entry.source.length > 0) {
+		function isAutoImport(entry: ts.CompletionEntry): entry is ts.CompletionEntry & { source: string } {
+			if (entry.hasAction && entry.source) {
 				if (
 					isPathDescendantOf(entry.source, srcDir) &&
 					!isPathDescendantOf(entry.source, path.join(currentDirectory, "node_modules"))
 				) {
-					return entry.source !== path.basename(file);
+					return true;
 				}
 			}
 			return false;
@@ -220,7 +217,7 @@ export = function init(modules: { typescript: typeof ts }) {
 				orig.entries.forEach((v) => {
 					const modifiers = v.kindModifiers?.split(",") ?? [];
 					if (modifiers.includes("deprecated") && config.hideDeprecated) return;
-					if (isAutoImport(file, v)) {
+					if (isAutoImport(v)) {
 						const completionBoundary = getNetworkBoundary(v.source);
 						if (!BoundaryCanSee(boundary, completionBoundary)) {
 							if (config.mode === "prefix") {
