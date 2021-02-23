@@ -12,10 +12,11 @@ export class Provider {
 	public rojoResolver?: RojoResolver;
 
 	public currentDirectory = this.constants.currentDirectory;
+	public projectService = this.info.project.projectService;
 	public pathTranslator = this.constants.pathTranslator;
+	public logger = this.projectService.logger;
 	public srcDir = this.constants.srcDir;
 	public config = this.constants.config;
-	public log = this.constants.log;
 
 	constructor(
 		public serviceProxy: ts.LanguageService,
@@ -24,7 +25,7 @@ export class Provider {
 	) {
 		const rojoConfig = RojoResolver.findRojoConfigFilePath(this.constants.currentDirectory);
 		if (rojoConfig) {
-			this.constants.log("Found rojoConfig: " + rojoConfig);
+			this.log("Found rojoConfig: " + rojoConfig);
 			this.rojoResolver = RojoResolver.fromPath(rojoConfig);
 		}
 	}
@@ -32,6 +33,15 @@ export class Provider {
 	get program() {
 		return expect(this.service.getProgram(), "getProgram");
 	}
+
+	log = (...args: unknown[]) => {
+		const stringArgs = new Array<string>();
+		for (const arg of args) {
+			stringArgs.push(typeof arg === "string" ? arg : JSON.stringify(arg));
+		}
+		this.logger.info(stringArgs.join(", "));
+		return stringArgs;
+	};
 
 	/**
 	 * Gets the source file for a file.
