@@ -9,7 +9,7 @@ import * as ts from "typescript";
 import * as path from "path";
 import { NetworkType, RojoResolver } from "./Rojo/RojoResolver";
 import { isPathDescendantOf } from "./Rojo/RojoResolver/fsUtil";
-import { createProxy } from "./createProxy";
+import { createProxy } from "./util/functions/createProxy";
 import { Provider } from "./util/provider";
 import { createConstants, Diagnostics } from "./util/constants";
 import { PluginCreateInfo } from "./types";

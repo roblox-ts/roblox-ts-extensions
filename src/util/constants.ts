@@ -1,4 +1,4 @@
-import { getConfig } from "../config";
+import { parseConfig } from "./functions/parseConfig";
 import { PathTranslator } from "../Rojo/PathTranslator";
 import { PluginCreateInfo } from "../types";
 
@@ -10,7 +10,7 @@ export function createConstants(info: PluginCreateInfo) {
 	const outDir = compilerOptions.outDir ?? currentDirectory;
 	const srcDir = compilerOptions.rootDir ?? currentDirectory;
 	const pathTranslator = new PathTranslator(srcDir, outDir, undefined, false);
-	const config = getConfig(info.config);
+	const config = parseConfig(info.config);
 	const log = (arg: string) => info.project.projectService.logger.info("[roblox-ts Extensions]: " + arg);
 
 	return {
