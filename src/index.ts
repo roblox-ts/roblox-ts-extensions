@@ -8,7 +8,7 @@ import {} from "ts-expose-internals";
 import * as ts from "typescript";
 import { createProxy } from "./util/functions/createProxy";
 import { Provider } from "./util/provider";
-import { Diagnostics } from "./util/constants";
+import { DIAGNOSTIC_CODE } from "./util/constants";
 import { PluginCreateInfo } from "./types";
 import { getCompletionsAtPositionFactory } from "./languageService/getCompletionsAtPosition";
 import { getSemanticDiagnosticsFactory } from "./languageService/getSemanticDiagnostics";
@@ -28,16 +28,11 @@ export = function init(modules: { typescript: typeof ts }) {
 		serviceProxy["getCompletionsAtPosition"] = getCompletionsAtPositionFactory(provider);
 		serviceProxy["getCompletionEntryDetails"] = getCompletionEntryDetailsFactory(provider);
 
-		// Thank you, typescript, for not giving a proper api for registering a codefix.
-		for (const x in Diagnostics) {
-			const diag = Diagnostics[x];
-			if (typeof diag === "number") {
-				(ts as any).codefix.registerCodeFix({
-					errorCodes: [diag],
-					getCodeActions: () => undefined,
-				});
-			}
-		}
+		// Register the codefix.
+		ts.codefix.registerCodeFix({
+			errorCodes: [DIAGNOSTIC_CODE],
+			getCodeActions: () => undefined,
+		});
 
 		// If roblox-ts-extensions fails, this code will fallback to the original method.
 		// If this isn't a roblox-ts project, this code will fallback to the original method.

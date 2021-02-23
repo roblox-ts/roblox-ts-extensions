@@ -24,8 +24,6 @@ export function createConstants(info: PluginCreateInfo) {
 	};
 }
 
-export enum Diagnostics {
-	CrossBoundaryImport = 1800000,
-}
+export const DIAGNOSTIC_CODE = 1800000;
 
 export type Constants = ReturnType<typeof createConstants>;

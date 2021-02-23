@@ -1,6 +1,6 @@
 import ts from "typescript";
 import { BoundaryCanSee, getNetworkBoundary } from "../util/boundary";
-import { Diagnostics } from "../util/constants";
+import { DIAGNOSTIC_CODE } from "../util/constants";
 import { Provider } from "../util/provider";
 
 export function getSemanticDiagnosticsFactory(provider: Provider): ts.LanguageService["getSemanticDiagnostics"] {
@@ -24,7 +24,7 @@ export function getSemanticDiagnosticsFactory(provider: Provider): ts.LanguageSe
 					if (!BoundaryCanSee(currentBoundary, importBoundary)) {
 						orig.push({
 							category: diagnosticsCategory,
-							code: Diagnostics.CrossBoundaryImport,
+							code: DIAGNOSTIC_CODE,
 							file: sourceFile,
 							messageText: `Cannot import ${importBoundary} module from ${currentBoundary}`,
 							start: $import.start,

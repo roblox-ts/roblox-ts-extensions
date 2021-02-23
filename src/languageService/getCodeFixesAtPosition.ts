@@ -1,5 +1,5 @@
 import ts from "typescript";
-import { Diagnostics } from "../util/constants";
+import { DIAGNOSTIC_CODE } from "../util/constants";
 import { Provider } from "../util/provider";
 
 export function getCodeFixesAtPositionFactory(provider: Provider): ts.LanguageService["getCodeFixesAtPosition"] {
@@ -7,9 +7,7 @@ export function getCodeFixesAtPositionFactory(provider: Provider): ts.LanguageSe
 	return (file, start, end, codes, formatOptions, preferences) => {
 		let orig = service.getCodeFixesAtPosition(file, start, end, codes, formatOptions, preferences);
 
-		const semanticDiagnostics = serviceProxy
-			.getSemanticDiagnostics(file)
-			.filter((x) => Diagnostics[x.code] !== undefined);
+		const semanticDiagnostics = serviceProxy.getSemanticDiagnostics(file).filter((x) => x.code === DIAGNOSTIC_CODE);
 		semanticDiagnostics.forEach((diag) => {
 			if (diag.start !== undefined && diag.length !== undefined) {
 				if (start >= diag.start && end <= diag.start + diag.length) {
