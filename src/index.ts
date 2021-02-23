@@ -260,31 +260,6 @@ export = function init(modules: { typescript: typeof ts }) {
 										}
 									}
 								}
-							} else if (
-								x.description.match(/^Add '.*' to existing import declaration from/) &&
-								config.convertExistingImports
-							) {
-								for (const change of x.changes) {
-									if (change.fileName === file) {
-										const importDecl = change.textChanges[0];
-										if (importDecl) {
-											const sourceFile = provider.getSourceFile(file);
-											const seek = sourceFile.seek(importDecl.span.start, "import", -1);
-											if (seek) {
-												x.changes.push({
-													fileName: file,
-													textChanges: [
-														{
-															newText: "import type",
-															span: ts.createTextSpan(seek.start, seek.len),
-														},
-													],
-												});
-												break;
-											}
-										}
-									}
-								}
 							}
 						}
 					}
