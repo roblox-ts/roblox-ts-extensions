@@ -1,19 +1,33 @@
-import { Constants } from "./constants";
-import { expect } from "./expect";
+import { createConstants } from "./constants";
+import { expect } from "./functions/expect";
 import { existsSync } from "fs-extra";
 import path from "path";
 import ts from "typescript";
 import { PluginCreateInfo } from "../types";
 import { assert } from "../Rojo/PathTranslator/assert";
+import { RojoResolver } from "../Rojo/RojoResolver";
 
 export class Provider {
-	public currentDir = this.constants.currentDirectory;
+	public constants = createConstants(this.info);
+	public rojoResolver?: RojoResolver;
+
+	public currentDirectory = this.constants.currentDirectory;
+	public pathTranslator = this.constants.pathTranslator;
+	public srcDir = this.constants.srcDir;
+	public config = this.constants.config;
+	public log = this.constants.log;
+
 	constructor(
-		public constants: Constants,
-		public hookedService: ts.LanguageService,
+		public serviceProxy: ts.LanguageService,
 		public service: ts.LanguageService,
 		public info: PluginCreateInfo,
-	) {}
+	) {
+		const rojoConfig = RojoResolver.findRojoConfigFilePath(this.constants.currentDirectory);
+		if (rojoConfig) {
+			this.constants.log("Found rojoConfig: " + rojoConfig);
+			this.rojoResolver = RojoResolver.fromPath(rojoConfig);
+		}
+	}
 
 	get program() {
 		return expect(this.service.getProgram(), "getProgram");
@@ -93,7 +107,7 @@ export class Provider {
 	 * Checks if this project is a roblox-ts project.
 	 */
 	isRbxtsProject() {
-		const compilerTypesPath = path.join(this.currentDir, "node_modules", "@rbxts", "compiler-types");
+		const compilerTypesPath = path.join(this.currentDirectory, "node_modules", "@rbxts", "compiler-types");
 		const currentTime = new Date().getTime();
 		if (!this._isRbxtsProject && this._ttl < currentTime) {
 			this._ttl = currentTime + 3000;
