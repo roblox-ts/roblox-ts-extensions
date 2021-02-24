@@ -1,5 +1,6 @@
 import ts from "typescript";
 import { DIAGNOSTIC_CODE } from "../util/constants";
+import { findImport } from "../util/imports";
 import { Provider } from "../util/provider";
 
 export function getCodeFixesAtPositionFactory(provider: Provider): ts.LanguageService["getCodeFixesAtPosition"] {
@@ -12,7 +13,7 @@ export function getCodeFixesAtPositionFactory(provider: Provider): ts.LanguageSe
 			if (diag.start !== undefined && diag.length !== undefined) {
 				if (start >= diag.start && end <= diag.start + diag.length) {
 					const sourceFile = provider.getSourceFile(file);
-					const $import = provider.findImport(sourceFile, diag.start);
+					const $import = findImport(provider, sourceFile, diag.start);
 					if ($import) {
 						orig = [
 							{

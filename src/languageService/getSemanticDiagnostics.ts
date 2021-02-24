@@ -1,6 +1,7 @@
 import ts from "typescript";
 import { BoundaryCanSee, getNetworkBoundary } from "../util/boundary";
 import { DIAGNOSTIC_CODE } from "../util/constants";
+import { getImports } from "../util/imports";
 import { Provider } from "../util/provider";
 
 export function getSemanticDiagnosticsFactory(provider: Provider): ts.LanguageService["getSemanticDiagnostics"] {
@@ -16,8 +17,7 @@ export function getSemanticDiagnosticsFactory(provider: Provider): ts.LanguageSe
 
 			const currentBoundary = getNetworkBoundary(provider, file);
 			const sourceFile = provider.getSourceFile(file);
-			provider
-				.getImports(sourceFile)
+			getImports(provider, sourceFile)
 				.filter((x) => !x.typeOnly)
 				.forEach(($import) => {
 					const importBoundary = getNetworkBoundary(provider, $import.absolutePath);
