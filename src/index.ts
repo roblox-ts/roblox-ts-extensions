@@ -63,8 +63,7 @@ export = function init(modules: { typescript: typeof ts }) {
 	}
 
 	function onConfigurationChanged(config: any) {
-		if (!provider) throw "NO PROVIDER";
-		Object.assign(provider.config, config);
+		if (provider) Object.assign(provider.config, config);
 	}
 
 	return { create, onConfigurationChanged };
