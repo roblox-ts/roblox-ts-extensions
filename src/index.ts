@@ -41,15 +41,16 @@ export = function init(modules: { typescript: typeof ts }) {
 			const originalMethod = (service as any)[key];
 			if (method && originalMethod) {
 				(serviceProxy as any)[key] = function () {
-					if (!provider.isRbxtsProject()) return originalMethod.apply(service, arguments);
-					try {
-						return method.apply(service, arguments);
-					} catch (err) {
-						if (err instanceof Error) {
-							console.error(`[roblox-ts error] ${key}`, `${err.stack ?? err.message}`);
+					if (provider.isRbxtsProject()) {
+						try {
+							return method.apply(service, arguments);
+						} catch (err) {
+							if (err instanceof Error) {
+								console.error(`[roblox-ts error] ${key}`, `${err.stack ?? err.message}`);
+							}
 						}
-						return originalMethod.apply(service, arguments);
 					}
+					return originalMethod.apply(service, arguments);
 				};
 			}
 		}
