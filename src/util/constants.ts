@@ -1,4 +1,4 @@
-import { getConfig } from "../config";
+import { parseConfig } from "./functions/parseConfig";
 import { PathTranslator } from "../Rojo/PathTranslator";
 import { PluginCreateInfo } from "../types";
 
@@ -10,8 +10,7 @@ export function createConstants(info: PluginCreateInfo) {
 	const outDir = compilerOptions.outDir ?? currentDirectory;
 	const srcDir = compilerOptions.rootDir ?? currentDirectory;
 	const pathTranslator = new PathTranslator(srcDir, outDir, undefined, false);
-	const config = getConfig(info.config);
-	const log = (arg: string) => info.project.projectService.logger.info("[roblox-ts Extensions]: " + arg);
+	const config = parseConfig(info.config);
 
 	return {
 		config,
@@ -22,17 +21,9 @@ export function createConstants(info: PluginCreateInfo) {
 		formatOptions,
 		outDir,
 		srcDir,
-		log,
 	};
 }
 
-export enum Diagnostics {
-	CrossBoundaryImport = 1800000,
-}
+export const DIAGNOSTIC_CODE = 1800000;
 
 export type Constants = ReturnType<typeof createConstants>;
-
-export const EXISTING_IMPORT_PATTERN = /^Add '.*' to existing import declaration from/;
-export const NEW_IMPORT_PATTERN = /^Import '.*' from module/;
-
-export const IMPORT_PATTERN = /import\s*(type)?\s*{\s*(?:(?=((?:\w*(?:\s*,\s*)?)*))\2)\s*?}\s*from\s*['"](.*)['"]/;

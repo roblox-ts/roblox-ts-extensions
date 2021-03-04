@@ -6,7 +6,7 @@ import { isInDirectory } from "./isInDirectory";
 export function isNodeInternal(provider: Provider, node: ts.Node) {
 	const sourceFile = node.getSourceFile();
 	if (sourceFile) {
-		const currentDir = provider.constants.currentDirectory;
+		const currentDir = provider.currentDirectory;
 		const typesPath = "node_modules/@rbxts/types";
 		const compilerTypesPath = "node_modules/@rbxts/compiler-types";
 		return (
