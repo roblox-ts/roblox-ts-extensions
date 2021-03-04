@@ -33,14 +33,18 @@ export class Provider {
 		return expect(this.service.getProgram(), "getProgram");
 	}
 
-	log = (...args: unknown[]) => {
+	/**
+	 * Log values to the console, all non-strings will be stringified.
+	 * @param args The values to be logged.
+	 */
+	log(...args: unknown[]) {
 		const stringArgs = new Array<string>();
 		for (const arg of args) {
 			stringArgs.push(typeof arg === "string" ? arg : JSON.stringify(arg));
 		}
 		this.logger.info(stringArgs.join(", "));
 		return stringArgs;
-	};
+	}
 
 	/**
 	 * Gets the source file for a file.
