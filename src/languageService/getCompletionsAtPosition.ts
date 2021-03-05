@@ -3,13 +3,14 @@ import { isPathDescendantOf } from "../Rojo/RojoResolver/fsUtil";
 import { Provider } from "../util/provider";
 import { normalizeType } from "../util/functions/normalizeType";
 import { isNodeInternal } from "../util/functions/isNodeInternal";
-import { BoundaryCanSee, getNetworkBoundary } from "../util/boundary";
+import { BoundaryCanSee, getNetworkBoundary, NetworkBoundary } from "../util/boundary";
 import { findPrecedingType } from "../util/functions/findPrecedingType";
 import { getWithDefault } from "../util/functions/getOrDefault";
 
 interface ModifiedEntry {
 	remove?: boolean;
 	source?: string;
+	boundary?: NetworkBoundary;
 }
 
 /**
@@ -53,8 +54,12 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 			new Array<string>(),
 		);
 
-		// If this symbol has the @hidden tag
+		// If this symbol has the @hidden tag, remove
 		if (tags.includes("hidden")) modifiedEntry.remove = true;
+		// If this symbol has the @(server|client|shared) tag, set boundary
+		if (tags.includes("server")) modifiedEntry.boundary = NetworkBoundary.Server;
+		if (tags.includes("client")) modifiedEntry.boundary = NetworkBoundary.Client;
+		if (tags.includes("shared")) modifiedEntry.boundary = NetworkBoundary.Shared;
 
 		if (isAccessExpression) {
 			// If this is Function.prototype or class.prototype
@@ -135,8 +140,8 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 				const modification = modifiedEntries.get(v.name)?.find((entry) => entry.source === v.source) ?? {};
 				if (modifiers.includes("deprecated") && config.hideDeprecated) return;
 				if (modification.remove) return;
-				if (isAutoImport(v)) {
-					const completionBoundary = getNetworkBoundary(provider, v.source);
+				if (isAutoImport(v) || modification.boundary) {
+					const completionBoundary = modification.boundary ?? getNetworkBoundary(provider, v.source ?? "");
 					if (!BoundaryCanSee(boundary, completionBoundary)) {
 						if (config.mode === "prefix") {
 							v.insertText = v.name;
