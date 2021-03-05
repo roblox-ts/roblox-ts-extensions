@@ -1,7 +1,7 @@
 import ts from "typescript";
 import path from "path";
 import { Provider } from "../provider";
-import { isInDirectory } from "./isInDirectory";
+import { isPathDescendantOf } from "../../Rojo/RojoResolver/fsUtil";
 
 export function isNodeInternal(provider: Provider, node: ts.Node) {
 	const sourceFile = node.getSourceFile();
@@ -10,8 +10,8 @@ export function isNodeInternal(provider: Provider, node: ts.Node) {
 		const typesPath = "node_modules/@rbxts/types";
 		const compilerTypesPath = "node_modules/@rbxts/compiler-types";
 		return (
-			isInDirectory(path.join(currentDir, typesPath), sourceFile.fileName) ||
-			isInDirectory(path.join(currentDir, compilerTypesPath), sourceFile.fileName)
+			isPathDescendantOf(path.join(currentDir, typesPath), sourceFile.fileName) ||
+			isPathDescendantOf(path.join(currentDir, compilerTypesPath), sourceFile.fileName)
 		);
 	}
 	return false;
