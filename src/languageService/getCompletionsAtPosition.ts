@@ -6,6 +6,7 @@ import { isNodeInternal } from "../util/functions/isNodeInternal";
 import { BoundaryCanSee, getNetworkBoundary, NetworkBoundary } from "../util/boundary";
 import { findPrecedingType } from "../util/functions/findPrecedingType";
 import { getWithDefault } from "../util/functions/getOrDefault";
+import { getBoundaryAtPosition } from "../util/functions/getBoundaryAtPosition";
 
 interface ModifiedEntry {
 	remove?: boolean;
@@ -107,14 +108,16 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 	}
 
 	return (file, pos, opt) => {
-		const boundary = getNetworkBoundary(provider, file);
+		const fileBoundary = getNetworkBoundary(provider, file);
 		const orig = service.getCompletionsAtPosition(file, pos, opt);
 		if (orig) {
 			const modifiedEntries = new Map<string, Array<ModifiedEntry>>();
 			const sourceFile = provider.getSourceFile(file);
 			const typeChecker = provider.program.getTypeChecker();
+			let scopeBoundary = fileBoundary;
 			if (sourceFile) {
 				const token = ts.findPrecedingToken(pos, sourceFile) ?? sourceFile.endOfFileToken;
+				scopeBoundary = getBoundaryAtPosition(provider, token) ?? scopeBoundary;
 				const type = findPrecedingType(typeChecker, token);
 				if (type) {
 					normalizeType(type).forEach((subtype) => {
@@ -140,15 +143,17 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 				const modification = modifiedEntries.get(v.name)?.find((entry) => entry.source === v.source) ?? {};
 				if (modifiers.includes("deprecated") && config.hideDeprecated) return;
 				if (modification.remove) return;
-				if (isAutoImport(v) || modification.boundary) {
-					const completionBoundary = modification.boundary ?? getNetworkBoundary(provider, v.source ?? "");
-					if (!BoundaryCanSee(boundary, completionBoundary)) {
-						if (config.mode === "prefix") {
-							v.insertText = v.name;
-							v.name = completionBoundary + ": " + v.name;
-						} else if (config.mode === "remove") return;
-					}
+
+				const isImport = isAutoImport(v);
+				const boundaryAtContext = isImport ? fileBoundary : scopeBoundary;
+				const completionBoundary = modification.boundary ?? getNetworkBoundary(provider, v.source ?? "");
+				if (boundaryAtContext && !BoundaryCanSee(boundaryAtContext, completionBoundary)) {
+					if (config.mode === "prefix") {
+						v.insertText = v.name;
+						v.name = completionBoundary + ": " + v.name;
+					} else if (config.mode === "remove") return;
 				}
+
 				entries.push(v);
 			});
 			orig.entries = entries;
