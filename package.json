@@ -10,7 +10,8 @@
 		"url": "https://github.com/roblox-ts/roblox-ts-extensions.git"
 	},
 	"scripts": {
-		"build": "tsc"
+		"build": "tsc",
+		"prepare": "tsc"
 	},
 	"directories": {},
 	"devDependencies": {
