@@ -18,11 +18,8 @@ function isInDirectories(file: string, currentDirectory: string, directories: st
 	return directories.some((directory) => isPathDescendantOf(file, path.join(currentDirectory, directory)));
 }
 
-/**
- * Retrieve the boundary of a specific file.
- * @param file The file path.
- */
-export function getNetworkBoundary(provider: Provider, file: string): NetworkBoundary {
+const cache = new Map<string, NetworkBoundary>();
+function getNetworkBoundaryNoCache(provider: Provider, file: string): NetworkBoundary {
 	const { currentDirectory, config, pathTranslator, rojoResolver } = provider;
 
 	if (file.length === 0) return NetworkBoundary.Shared;
@@ -40,6 +37,17 @@ export function getNetworkBoundary(provider: Provider, file: string): NetworkBou
 		}
 	}
 	return NetworkBoundary.Shared;
+}
+
+/**
+ * Retrieve the boundary of a specific file.
+ * @param file The file path.
+ */
+export function getNetworkBoundary(provider: Provider, file: string): NetworkBoundary {
+	let result = cache.get(file);
+	if (!result) cache.set(file, (result = getNetworkBoundaryNoCache(provider, file)));
+
+	return result;
 }
 
 /**

@@ -1,6 +1,9 @@
 import path from "path";
 
-const cache = new Map<string, boolean>();
+const cache = new Map<string, Map<string, boolean>>();
+export function isPathDescendantOfNoCache(filePath: string, dirPath: string) {
+	return dirPath === filePath || !path.relative(dirPath, filePath).startsWith("..");
+}
 
 /**
  * Checks if the `filePath` path is a descendant of the `dirPath` path.
@@ -9,10 +12,13 @@ const cache = new Map<string, boolean>();
  */
 export function isPathDescendantOf(filePath: string, dirPath: string) {
 	if (filePath === dirPath) return true;
-	const key = `${dirPath}->${path.dirname(filePath)}`;
-	let result = cache.get(key);
-	if (result === undefined) {
-		cache.set(key, (result = !(path.relative(dirPath, filePath).substring(0, 2) === "..")));
-	}
-	return result;
+	filePath = path.dirname(filePath);
+
+	let dirCache = cache.get(dirPath);
+	if (!dirCache) cache.set(dirPath, (dirCache = new Map()));
+
+	let fileCache = dirCache.get(filePath);
+	if (fileCache === undefined) dirCache.set(filePath, (fileCache = isPathDescendantOfNoCache(filePath, dirPath)));
+
+	return fileCache;
 }
