@@ -49,22 +49,28 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 		};
 
 		const declarations = symbol.getDeclarations() ?? [];
-		const isInternal = declarations.some((declaration) => isNodeInternal(provider, declaration));
-		const tags = declarations.reduce(
-			(acc, declaration) => acc.concat(ts.getJSDocTags(declaration).map((x) => x.tagName.text)),
-			new Array<string>(),
-		);
-
-		// If this symbol has the @hidden tag, remove
-		if (tags.includes("hidden")) modifiedEntry.remove = true;
-		// If this symbol has the @(server|client|shared) tag, set boundary
-		if (tags.includes("server")) modifiedEntry.boundary = NetworkBoundary.Server;
-		if (tags.includes("client")) modifiedEntry.boundary = NetworkBoundary.Client;
-		if (tags.includes("shared")) modifiedEntry.boundary = NetworkBoundary.Shared;
+		for (const declaration of declarations) {
+			for (const tag of ts.getJSDocTags(declaration)) {
+				const name = tag.tagName.text;
+				// If this symbol has the @hidden tag, remove
+				if (name === "hidden") modifiedEntry.remove = true;
+				// If this symbol has the @(server|client|shared) tag, set boundary
+				if (name === "server") modifiedEntry.boundary = NetworkBoundary.Server;
+				if (name === "client") modifiedEntry.boundary = NetworkBoundary.Client;
+				if (name === "shared") modifiedEntry.boundary = NetworkBoundary.Shared;
+			}
+		}
 
 		if (isAccessExpression) {
 			// If this is Function.prototype or class.prototype
-			if (symbol.name === "prototype" && (isInternal || !symbol.declarations)) modifiedEntry.remove = true;
+			if (symbol.name === "prototype") {
+				if (!symbol.declarations) {
+					modifiedEntry.remove = true;
+				} else {
+					const isInternal = declarations.some((declaration) => isNodeInternal(provider, declaration));
+					if (isInternal) modifiedEntry.remove = true;
+				}
+			}
 		}
 
 		return modifiedEntry;
