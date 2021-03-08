@@ -1,6 +1,12 @@
 # roblox-ts Extensions
-This is a Language Service plugin that changes autocompletes based on their network boundary (server / shared)
-Currently this only has the aforementioned functionality, however, I do plan to add more in the future so feel free to file an issue.
+This is a Language Service plugin that improves the editing experience while using roblox-ts.
+
+### Features
+- Remove or prefix cross-boundary imports in intellisense.
+- Warn about non-type only cross-boundary imports.
+- Remove internal fields from roblox-ts types.
+- Remove deprecated entries from intellisense.
+- Remove @hidden entries from intellisense.
 
 ## Visual Studio Code
 If you use Visual Studio Code, it's recommended that you install this using [our extension.](https://marketplace.visualstudio.com/items?itemName=Roblox-TS.vscode-roblox-ts)
