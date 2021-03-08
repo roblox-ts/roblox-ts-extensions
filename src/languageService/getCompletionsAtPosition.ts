@@ -1,5 +1,4 @@
 import ts from "typescript";
-import { isPathDescendantOf } from "../Rojo/RojoResolver/fsUtil";
 import { Provider } from "../util/provider";
 import { normalizeType } from "../util/functions/normalizeType";
 import { isNodeInternal } from "../util/functions/isNodeInternal";
@@ -18,7 +17,7 @@ interface ModifiedEntry {
  * Create the getCompletionsAtPosition method.
  */
 export function getCompletionsAtPositionFactory(provider: Provider): ts.LanguageService["getCompletionsAtPosition"] {
-	const { service, srcDir, config } = provider;
+	const { service, config } = provider;
 	const host = provider.info.languageServiceHost;
 	const importSuggestionsCache = host.getImportSuggestionsCache && host.getImportSuggestionsCache();
 
@@ -29,12 +28,7 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 	 * @param entry The entry to check.
 	 */
 	function isAutoImport(entry: ts.CompletionEntry): entry is ts.CompletionEntry & { source: string } {
-		if (entry.hasAction && entry.source) {
-			if (isPathDescendantOf(entry.source, srcDir)) {
-				return true;
-			}
-		}
-		return false;
+		return !!(entry.hasAction && entry.source);
 	}
 
 	/**
@@ -145,9 +139,9 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 			}
 			const entries: ts.CompletionEntry[] = [];
 			orig.entries.forEach((v) => {
-				const modifiers = v.kindModifiers?.split(",") ?? [];
+				const modifiers = v.kindModifiers;
 				const modification = modifiedEntries.get(v.name)?.find((entry) => entry.source === v.source) ?? {};
-				if (modifiers.includes("deprecated") && config.hideDeprecated) return;
+				if (modifiers?.includes("deprecated") && config.hideDeprecated) return;
 				if (modification.remove) return;
 
 				const isImport = isAutoImport(v);
