@@ -4,6 +4,8 @@ import { DIAGNOSTIC_CODE } from "../util/constants";
 import { getImports } from "../util/imports";
 import { Provider } from "../util/provider";
 
+const NON_ASSIGNABLE_REGEX = /Property '_nominal_(.*)' is missing in type '(.*)' but required in type '(.*)'./;
+
 export function getSemanticDiagnosticsFactory(provider: Provider): ts.LanguageService["getSemanticDiagnostics"] {
 	const { service, config } = provider;
 	return (file) => {
@@ -33,6 +35,15 @@ export function getSemanticDiagnosticsFactory(provider: Provider): ts.LanguageSe
 					}
 				});
 		}
+
+		orig.forEach((diagnostic) => {
+			if (typeof diagnostic.messageText === "string") {
+				const match = NON_ASSIGNABLE_REGEX.exec(diagnostic.messageText);
+				if (match) {
+					diagnostic.messageText = `Type '${match[2]}' is not assignable to nominal type '${match[1]}'`;
+				}
+			}
+		});
 
 		return orig;
 	};
