@@ -1,6 +1,6 @@
 {
 	"name": "roblox-ts-extensions",
-	"version": "1.4.0",
+	"version": "1.5.0",
 	"description": "A Language Service plugin to emphasize the client/server network boundary when using roblox-ts.",
 	"main": "index.js",
 	"author": "Fireboltofdeath <fireboltofpublic@gmail.com> (https://github.com/Fireboltofdeath)",
