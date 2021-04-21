@@ -2,7 +2,7 @@ import ts from "typescript";
 import { Provider } from "../util/provider";
 import { normalizeType } from "../util/functions/normalizeType";
 import { isNodeInternal } from "../util/functions/isNodeInternal";
-import { BoundaryCanSee, getNetworkBoundary, NetworkBoundary } from "../util/boundary";
+import { boundaryCanSee, getNetworkBoundary, NetworkBoundary } from "../util/boundary";
 import { findPrecedingType } from "../util/functions/findPrecedingType";
 import { getWithDefault } from "../util/functions/getOrDefault";
 import { getBoundaryAtPosition } from "../util/functions/getBoundaryAtPosition";
@@ -147,7 +147,7 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 				const isImport = isAutoImport(v);
 				const boundaryAtContext = isImport ? fileBoundary : scopeBoundary;
 				const completionBoundary = modification.boundary ?? getNetworkBoundary(provider, v.source ?? "");
-				if (boundaryAtContext && !BoundaryCanSee(boundaryAtContext, completionBoundary)) {
+				if (boundaryAtContext && !boundaryCanSee(boundaryAtContext, completionBoundary)) {
 					if (config.mode === "prefix") {
 						v.insertText = v.name;
 						v.name = completionBoundary + ": " + v.name;

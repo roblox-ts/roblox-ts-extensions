@@ -55,6 +55,6 @@ export function getNetworkBoundary(provider: Provider, file: string): NetworkBou
  * @param from The boundary of the current file.
  * @param to The boundary of the auto-complete.
  */
-export function BoundaryCanSee(from: NetworkBoundary, to: NetworkBoundary) {
+export function boundaryCanSee(from: NetworkBoundary, to: NetworkBoundary) {
 	return from === to || to === NetworkBoundary.Shared;
 }

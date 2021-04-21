@@ -1,5 +1,5 @@
 import ts from "typescript";
-import { BoundaryCanSee, getNetworkBoundary } from "../util/boundary";
+import { boundaryCanSee, getNetworkBoundary } from "../util/boundary";
 import { DIAGNOSTIC_CODE } from "../util/constants";
 import { getImports } from "../util/imports";
 import { Provider } from "../util/provider";
@@ -23,7 +23,7 @@ export function getSemanticDiagnosticsFactory(provider: Provider): ts.LanguageSe
 				.filter((x) => !x.typeOnly)
 				.forEach(($import) => {
 					const importBoundary = getNetworkBoundary(provider, $import.absolutePath);
-					if (!BoundaryCanSee(currentBoundary, importBoundary)) {
+					if (!boundaryCanSee(currentBoundary, importBoundary)) {
 						orig.push({
 							category: diagnosticsCategory,
 							code: DIAGNOSTIC_CODE,
