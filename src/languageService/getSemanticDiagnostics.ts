@@ -4,7 +4,25 @@ import { DIAGNOSTIC_CODE } from "../util/constants";
 import { getImports } from "../util/imports";
 import { Provider } from "../util/provider";
 
-const NON_ASSIGNABLE_REGEX = /Property '_nominal_(.*)' is missing in type '(.*)' but required in type '(.*)'./;
+interface ClarifiedDiagnostic {
+	regex: RegExp;
+	func: (diagnostic: ts.Diagnostic, match: RegExpExecArray) => void;
+}
+
+const CLARIFIED_DIAGNOSTICS: Array<ClarifiedDiagnostic> = [
+	{
+		regex: /Property '_nominal_(.*)' is missing in type '(.*)' but required in type '(.*)'./,
+		func: (diagnostic, match) => {
+			diagnostic.messageText = `Type '${match[2]}' is not assignable to nominal type '${match[1]}'`;
+		},
+	},
+	{
+		regex: /Type '(.*?)' is missing the following properties from type '(.*?)': .*?_nominal_(\2)/,
+		func: (diagnostic, match) => {
+			diagnostic.messageText = `Type '${match[1]}' is not assignable to nominal type '${match[2]}'`;
+		},
+	},
+];
 
 export function getSemanticDiagnosticsFactory(provider: Provider): ts.LanguageService["getSemanticDiagnostics"] {
 	const { service, config } = provider;
@@ -38,9 +56,12 @@ export function getSemanticDiagnosticsFactory(provider: Provider): ts.LanguageSe
 
 		orig.forEach((diagnostic) => {
 			if (typeof diagnostic.messageText === "string") {
-				const match = NON_ASSIGNABLE_REGEX.exec(diagnostic.messageText);
-				if (match) {
-					diagnostic.messageText = `Type '${match[2]}' is not assignable to nominal type '${match[1]}'`;
+				for (const clarifiedDiagnostic of CLARIFIED_DIAGNOSTICS) {
+					const match = clarifiedDiagnostic.regex.exec(diagnostic.messageText);
+					if (match) {
+						clarifiedDiagnostic.func(diagnostic, match);
+						break;
+					}
 				}
 			}
 		});
