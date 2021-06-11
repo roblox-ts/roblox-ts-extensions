@@ -17,10 +17,18 @@ export function getCompletionEntryDetailsFactory(provider: Provider): ts.Languag
 			.reduce((acc, val) => acc.concat(val.textChanges), new Array<ts.TextChange>());
 	}
 
-	return (file, pos, entry, formatOptions, source, preferences) => {
+	return (file, pos, entry, formatOptions, source, preferences, data) => {
 		const match = entry.match(/^(Server|Shared|Client): (\w+)$/);
 		if (match && match[2] && source) {
-			const result = service.getCompletionEntryDetails(file, pos, match[2], formatOptions, source, preferences);
+			const result = service.getCompletionEntryDetails(
+				file,
+				pos,
+				match[2],
+				formatOptions,
+				source,
+				preferences,
+				data,
+			);
 			if (result && result.codeActions && result.codeActions.length > 0) {
 				for (const textChange of flattenChanges(file, result.codeActions)) {
 					textChange.newText = textChange.newText.replace(/import {(.*)}/, "import type {$1}");
@@ -28,6 +36,6 @@ export function getCompletionEntryDetailsFactory(provider: Provider): ts.Languag
 			}
 			return result;
 		}
-		return service.getCompletionEntryDetails(file, pos, entry, formatOptions, source, preferences);
+		return service.getCompletionEntryDetails(file, pos, entry, formatOptions, source, preferences, data);
 	};
 }

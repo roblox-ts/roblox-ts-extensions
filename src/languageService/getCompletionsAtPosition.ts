@@ -18,8 +18,6 @@ interface ModifiedEntry {
  */
 export function getCompletionsAtPositionFactory(provider: Provider): ts.LanguageService["getCompletionsAtPosition"] {
 	const { service, config, ts } = provider;
-	const host = provider.info.languageServiceHost;
-	const importSuggestionsCache = host.getImportSuggestionsCache && host.getImportSuggestionsCache();
 
 	/**
 	 * Check if the specified entry is an auto import and is a source file.
@@ -75,20 +73,12 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 	 * @param sourceFile The source file
 	 * @returns An array of symbols that can be imported
 	 */
-	function getAutoImportSuggestions(sourceFile: ts.SourceFile): Array<ts.Symbol> {
+	function getAutoImportSuggestions(): Array<ts.Symbol> {
 		const typeChecker = provider.program.getTypeChecker();
-		const cached = importSuggestionsCache?.get(
-			sourceFile.fileName,
-			typeChecker,
-			host.getProjectVersion && host.getProjectVersion(),
-		);
-		if (cached) return cached.map((x) => x.symbol);
 		const symbols = new Array<ts.Symbol>();
 		ts.codefix.forEachExternalModuleToImportFrom(
 			provider.program,
 			provider.info.languageServiceHost,
-			sourceFile,
-			true,
 			false,
 			(moduleSymbol) => typeChecker.getExportsOfModule(moduleSymbol).forEach((symbol) => symbols.push(symbol)),
 		);
@@ -129,7 +119,7 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 					typeChecker.getSymbolsInScope(token, getScopeFlags(token)).forEach((symbol) => {
 						getWithDefault(modifiedEntries, symbol.name, []).push(getModifications(symbol));
 					});
-					getAutoImportSuggestions(sourceFile).forEach((symbol) => {
+					getAutoImportSuggestions().forEach((symbol) => {
 						if (!symbol.parent) return;
 						getWithDefault(modifiedEntries, symbol.name, []).push(
 							getModifications(symbol, false, ts.stripQuotes(symbol.parent.name)),
