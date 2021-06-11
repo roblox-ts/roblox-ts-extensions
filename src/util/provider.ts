@@ -2,13 +2,14 @@ import { createConstants } from "./constants";
 import { expect } from "./functions/expect";
 import { existsSync } from "fs-extra";
 import path from "path";
-import ts from "typescript";
+import type ts from "typescript";
 import { PluginCreateInfo } from "../types";
 import { RojoResolver } from "../Rojo/RojoResolver";
 
 export class Provider {
 	public constants = createConstants(this.info);
 	public rojoResolver?: RojoResolver;
+	public ts: typeof ts;
 
 	public currentDirectory = this.constants.currentDirectory;
 	public projectService = this.info.project.projectService;
@@ -21,16 +22,23 @@ export class Provider {
 		public serviceProxy: ts.LanguageService,
 		public service: ts.LanguageService,
 		public info: PluginCreateInfo,
+		tsImpl: typeof ts,
 	) {
 		const rojoConfig = RojoResolver.findRojoConfigFilePath(this.constants.currentDirectory);
 		if (rojoConfig) {
 			this.log("Found rojoConfig: " + rojoConfig);
 			this.rojoResolver = RojoResolver.fromPath(rojoConfig);
 		}
+
+		this.ts = tsImpl;
 	}
 
 	get program() {
 		return expect(this.service.getProgram(), "getProgram");
+	}
+
+	get typeChecker() {
+		return this.program.getTypeChecker();
 	}
 
 	/**

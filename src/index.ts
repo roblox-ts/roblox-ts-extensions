@@ -21,7 +21,7 @@ export = function init(modules: { typescript: typeof ts }) {
 	function create(info: PluginCreateInfo) {
 		const service = info.languageService;
 		const serviceProxy = createProxy(service);
-		provider = new Provider(serviceProxy, service, info);
+		provider = new Provider(serviceProxy, service, info, ts);
 
 		serviceProxy["getSemanticDiagnostics"] = getSemanticDiagnosticsFactory(provider);
 		serviceProxy["getCodeFixesAtPosition"] = getCodeFixesAtPositionFactory(provider);

@@ -1,10 +1,10 @@
-import ts from "typescript";
+import type ts from "typescript";
 import { DIAGNOSTIC_CODE } from "../util/constants";
 import { findImport } from "../util/imports";
 import { Provider } from "../util/provider";
 
 export function getCodeFixesAtPositionFactory(provider: Provider): ts.LanguageService["getCodeFixesAtPosition"] {
-	const { service, serviceProxy } = provider;
+	const { service, serviceProxy, ts } = provider;
 	return (file, start, end, codes, formatOptions, preferences) => {
 		let orig = service.getCodeFixesAtPosition(file, start, end, codes, formatOptions, preferences);
 
