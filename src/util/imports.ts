@@ -1,4 +1,4 @@
-import ts from "typescript";
+import type ts from "typescript";
 import path from "path";
 import { assert } from "../Rojo/PathTranslator/assert";
 import { Provider } from "./provider";
@@ -19,6 +19,7 @@ export function transformImportPath(provider: Provider, filePath: string, import
  * @param declaration The import declaration
  */
 export function getImportInfo(provider: Provider, declaration: ts.ImportDeclaration) {
+	const { ts } = provider;
 	const { moduleSpecifier, importClause } = declaration;
 	assert(importClause && ts.isStringLiteral(moduleSpecifier));
 	const path = moduleSpecifier.text;
@@ -37,6 +38,7 @@ export function getImportInfo(provider: Provider, declaration: ts.ImportDeclarat
  * @param pos The position to check
  */
 export function findImport(provider: Provider, sourceFile: ts.SourceFile, pos: number): ImportInfo | undefined {
+	const { ts } = provider;
 	const node = ts.getTokenAtPosition(sourceFile, pos);
 	const importDeclaration = ts.findAncestor(node, (decl): decl is ts.ImportDeclaration =>
 		ts.isImportDeclaration(decl),
@@ -51,6 +53,7 @@ export function findImport(provider: Provider, sourceFile: ts.SourceFile, pos: n
  * @param sourceFile The source file
  */
 export function getImports(provider: Provider, sourceFile: ts.SourceFile) {
+	const { ts } = provider;
 	const imports: ImportInfo[] = [];
 
 	for (const statement of sourceFile.statements) {

@@ -1,4 +1,4 @@
-import ts from "typescript";
+import type ts from "typescript";
 import { Provider } from "../util/provider";
 import { normalizeType } from "../util/functions/normalizeType";
 import { isNodeInternal } from "../util/functions/isNodeInternal";
@@ -17,7 +17,7 @@ interface ModifiedEntry {
  * Create the getCompletionsAtPosition method.
  */
 export function getCompletionsAtPositionFactory(provider: Provider): ts.LanguageService["getCompletionsAtPosition"] {
-	const { service, config } = provider;
+	const { service, config, ts } = provider;
 	const host = provider.info.languageServiceHost;
 	const importSuggestionsCache = host.getImportSuggestionsCache && host.getImportSuggestionsCache();
 
@@ -118,7 +118,7 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 			if (sourceFile) {
 				const token = ts.findPrecedingToken(pos, sourceFile) ?? sourceFile.endOfFileToken;
 				scopeBoundary = getBoundaryAtPosition(provider, token) ?? scopeBoundary;
-				const type = findPrecedingType(typeChecker, token);
+				const type = findPrecedingType(provider, token);
 				if (type) {
 					normalizeType(type).forEach((subtype) => {
 						for (const symbol of subtype.getApparentProperties()) {

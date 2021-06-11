@@ -1,4 +1,4 @@
-import ts from "typescript";
+import type ts from "typescript";
 import { boundaryCanSee, getNetworkBoundary } from "../util/boundary";
 import { DIAGNOSTIC_CODE } from "../util/constants";
 import { getImports } from "../util/imports";
@@ -25,7 +25,7 @@ const CLARIFIED_DIAGNOSTICS: Array<ClarifiedDiagnostic> = [
 ];
 
 export function getSemanticDiagnosticsFactory(provider: Provider): ts.LanguageService["getSemanticDiagnostics"] {
-	const { service, config } = provider;
+	const { service, config, ts } = provider;
 	return (file) => {
 		const orig = service.getSemanticDiagnostics(file);
 		if (config.diagnosticsMode !== "off") {

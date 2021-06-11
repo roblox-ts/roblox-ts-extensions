@@ -1,4 +1,4 @@
-import ts from "typescript";
+import type ts from "typescript";
 import path from "path";
 import { Provider } from "../provider";
 import { isPathDescendantOf } from "../../Rojo/RojoResolver/fsUtil";

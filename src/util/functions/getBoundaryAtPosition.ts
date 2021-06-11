@@ -1,4 +1,4 @@
-import ts from "typescript";
+import type ts from "typescript";
 import { NetworkBoundary } from "../boundary";
 import { Provider } from "../provider";
 
@@ -15,11 +15,12 @@ function getOppositeBoundary(boundary: NetworkBoundary): NetworkBoundary {
  * @param kind The operator to flatten
  * @returns A flattened array of expressions
  */
-function flattenBinaryExpressionTree(expression: ts.Expression, kind: ts.SyntaxKind) {
+function flattenBinaryExpressionTree(provider: Provider, expression: ts.Expression, kind: ts.SyntaxKind) {
+	const { ts } = provider;
 	const flattened = new Array<ts.Expression>();
 	if (ts.isBinaryExpression(expression) && expression.operatorToken.kind === kind) {
-		flattened.push(...flattenBinaryExpressionTree(expression.left, kind));
-		flattened.push(...flattenBinaryExpressionTree(expression.right, kind));
+		flattened.push(...flattenBinaryExpressionTree(provider, expression.left, kind));
+		flattened.push(...flattenBinaryExpressionTree(provider, expression.right, kind));
 	} else {
 		flattened.push(expression);
 	}
@@ -32,11 +33,8 @@ function flattenBinaryExpressionTree(expression: ts.Expression, kind: ts.SyntaxK
  * @param isClientSymbol The symbol for narrowing client boundary
  * @returns A function which returns the narrowed boundary of an expression, or undefined if it couldn't be narrowed.
  */
-function getBoundaryFromExpressionFactory(
-	typeChecker: ts.TypeChecker,
-	isServerSymbol: ts.Symbol,
-	isClientSymbol: ts.Symbol,
-) {
+function getBoundaryFromExpressionFactory(provider: Provider, isServerSymbol: ts.Symbol, isClientSymbol: ts.Symbol) {
+	const { typeChecker, ts } = provider;
 	return function getBoundaryFromExpression(expression: ts.Expression): NetworkBoundary | undefined {
 		if (ts.isCallExpression(expression)) {
 			const callSymbol = typeChecker.getSymbolAtLocation(expression.expression);
@@ -74,7 +72,7 @@ function getBoundaryFromExpressionFactory(
 					if (!lhs || !rhs) return undefined;
 					return lhs === rhs ? lhs : undefined;
 				case ts.SyntaxKind.AmpersandAmpersandToken:
-					const flattenedTree = flattenBinaryExpressionTree(expression, operator);
+					const flattenedTree = flattenBinaryExpressionTree(provider, expression, operator);
 					let result: NetworkBoundary | undefined;
 					for (const node of flattenedTree) {
 						const nodeBoundary = getBoundaryFromExpression(node);
@@ -101,7 +99,7 @@ function getBoundaryFromExpressionFactory(
  * @param token The token to start at
  */
 export function getBoundaryAtPosition(provider: Provider, token: ts.Node) {
-	const typeChecker = provider.program.getTypeChecker();
+	const { typeChecker, ts } = provider;
 	const runServiceSymbol = typeChecker.resolveName("RunService", undefined, ts.SymbolFlags.All, false);
 	if (!runServiceSymbol) return;
 	if (!runServiceSymbol.declarations?.[0]) return;
@@ -112,7 +110,7 @@ export function getBoundaryAtPosition(provider: Provider, token: ts.Node) {
 	const isClientSymbol = runServiceType.getProperty("IsClient");
 	if (!isServerSymbol || !isClientSymbol) return;
 
-	const getBoundaryFromExpression = getBoundaryFromExpressionFactory(typeChecker, isServerSymbol, isClientSymbol);
+	const getBoundaryFromExpression = getBoundaryFromExpressionFactory(provider, isServerSymbol, isClientSymbol);
 
 	return ts.forEachAncestor(token, (node) => {
 		if (ts.isIfStatement(node)) {
