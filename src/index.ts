@@ -63,7 +63,11 @@ export = function init(modules: { typescript: typeof ts }) {
 	}
 
 	function onConfigurationChanged(config: any) {
-		if (provider) Object.assign(provider.config, config);
+		if (provider) {
+			Object.assign(provider.config, config);
+
+			provider.boundaryCache.clear();
+		}
 	}
 
 	return { create, onConfigurationChanged };

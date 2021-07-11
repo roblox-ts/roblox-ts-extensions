@@ -5,6 +5,7 @@ import path from "path";
 import type ts from "typescript";
 import { PluginCreateInfo } from "../types";
 import { RojoResolver } from "../Rojo/RojoResolver";
+import { NetworkBoundary } from "./boundary";
 
 export class Provider {
 	public constants = createConstants(this.info);
@@ -17,6 +18,8 @@ export class Provider {
 	public logger = this.projectService.logger;
 	public srcDir = this.constants.srcDir;
 	public config = this.constants.config;
+
+	public boundaryCache = new Map<string, NetworkBoundary>();
 
 	constructor(
 		public serviceProxy: ts.LanguageService,

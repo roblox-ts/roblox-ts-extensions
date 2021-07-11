@@ -18,7 +18,6 @@ function isInDirectories(file: string, currentDirectory: string, directories: st
 	return directories.some((directory) => isPathDescendantOf(file, path.join(currentDirectory, directory)));
 }
 
-const cache = new Map<string, NetworkBoundary>();
 function getNetworkBoundaryNoCache(provider: Provider, file: string): NetworkBoundary {
 	const { currentDirectory, config, pathTranslator, rojoResolver } = provider;
 
@@ -44,6 +43,8 @@ function getNetworkBoundaryNoCache(provider: Provider, file: string): NetworkBou
  * @param file The file path.
  */
 export function getNetworkBoundary(provider: Provider, file: string): NetworkBoundary {
+	const cache = provider.boundaryCache;
+
 	let result = cache.get(file);
 	if (!result) cache.set(file, (result = getNetworkBoundaryNoCache(provider, file)));
 
