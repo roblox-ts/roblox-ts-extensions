@@ -14,16 +14,10 @@ export function isRbxtsProject(ts: typeof tslib, info: PluginCreateInfo) {
 	if (!packageJson) return false;
 
 	const devDependencies = packageJson.devDependencies;
-	if (typeof devDependencies === "object" && devDependencies["@rbxts/compiler-types"]) {
-		console.log("found @rbxts/compilerTypes in devDeps");
-		return true;
-	}
+	if (typeof devDependencies === "object" && devDependencies["@rbxts/compiler-types"]) return true;
 
 	const dependencies = packageJson.dependencies;
-	if (typeof dependencies === "object" && dependencies["@rbxts/compiler-types"]) {
-		console.log("found @rbxts/compilerTypes in deps");
-		return true;
-	}
+	if (typeof dependencies === "object" && dependencies["@rbxts/compiler-types"]) return true;
 
 	return false;
 }

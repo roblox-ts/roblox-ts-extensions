@@ -22,7 +22,7 @@ export = function init(modules: { typescript: typeof ts }) {
 	function create(info: PluginCreateInfo) {
 		const service = info.languageService;
 		if (!isRbxtsProject(ts, info)) {
-			// This module does not depend on @rbxts/compiler-types, so skip instantiation.
+			// This project does not depend on @rbxts/compiler-types, so skip instantiation.
 			console.log("roblox-ts language extensions has skipped loading in non-rbxts project.");
 			return service;
 		}
