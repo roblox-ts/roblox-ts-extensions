@@ -1,8 +1,6 @@
+import type ts from "typescript";
 import { createConstants } from "./constants";
 import { expect } from "./functions/expect";
-import { existsSync } from "fs-extra";
-import path from "path";
-import type ts from "typescript";
 import { PluginCreateInfo } from "../types";
 import { RojoResolver } from "../Rojo/RojoResolver";
 import { NetworkBoundary } from "./boundary";
@@ -63,21 +61,5 @@ export class Provider {
 	 */
 	getSourceFile(file: string): ts.SourceFile {
 		return expect(this.program.getSourceFile(file), "getSourceFile");
-	}
-
-	private _isRbxtsProject: boolean = this.isRbxtsProject();
-	private _ttl = 0;
-
-	/**
-	 * Checks if this project is a roblox-ts project.
-	 */
-	isRbxtsProject() {
-		const compilerTypesPath = path.join(this.currentDirectory, "node_modules", "@rbxts", "compiler-types");
-		const currentTime = new Date().getTime();
-		if (!this._isRbxtsProject && this._ttl < currentTime) {
-			this._ttl = currentTime + 3000;
-			this._isRbxtsProject = existsSync(compilerTypesPath);
-		}
-		return this._isRbxtsProject;
 	}
 }

@@ -14,12 +14,19 @@ import { getCompletionsAtPositionFactory } from "./languageService/getCompletion
 import { getSemanticDiagnosticsFactory } from "./languageService/getSemanticDiagnostics";
 import { getCodeFixesAtPositionFactory } from "./languageService/getCodeFixesAtPosition";
 import { getCompletionEntryDetailsFactory } from "./languageService/getCompletionEntryDetails";
+import { isRbxtsProject } from "./util/functions/isRbxtsProject";
 
 export = function init(modules: { typescript: typeof ts }) {
 	const ts = modules.typescript;
 	let provider: Provider;
 	function create(info: PluginCreateInfo) {
 		const service = info.languageService;
+		if (!isRbxtsProject(ts, info)) {
+			// This module does not depend on @rbxts/compiler-types, so skip instantiation.
+			console.log("roblox-ts language extensions has skipped loading in non-rbxts project.");
+			return service;
+		}
+
 		const serviceProxy = createProxy(service);
 		provider = new Provider(serviceProxy, service, info, ts);
 
@@ -41,13 +48,11 @@ export = function init(modules: { typescript: typeof ts }) {
 			const originalMethod = (service as any)[key];
 			if (method && originalMethod) {
 				(serviceProxy as any)[key] = function () {
-					if (provider.isRbxtsProject()) {
-						try {
-							return method.apply(service, arguments);
-						} catch (err) {
-							if (err instanceof Error) {
-								console.error(`[roblox-ts error] ${key}`, `${err.stack ?? err.message}`);
-							}
+					try {
+						return method.apply(service, arguments);
+					} catch (err) {
+						if (err instanceof Error) {
+							console.error(`[roblox-ts error] ${key}`, `${err.stack ?? err.message}`);
 						}
 					}
 					return originalMethod.apply(service, arguments);
