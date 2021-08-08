@@ -6,6 +6,7 @@ import { boundaryCanSee, getNetworkBoundary, NetworkBoundary } from "../util/bou
 import { findPrecedingType } from "../util/functions/findPrecedingType";
 import { getWithDefault } from "../util/functions/getOrDefault";
 import { getBoundaryAtPosition } from "../util/functions/getBoundaryAtPosition";
+import { findPrecedingSymbol } from "../util/functions/findPrecedingSymbol";
 
 interface ModifiedEntry {
 	remove?: boolean;
@@ -109,11 +110,16 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 				const token = ts.findPrecedingToken(pos, sourceFile) ?? sourceFile.endOfFileToken;
 				scopeBoundary = getBoundaryAtPosition(provider, token) ?? scopeBoundary;
 				const type = findPrecedingType(provider, token);
+				const symbol = findPrecedingSymbol(provider, token);
 				if (type) {
 					normalizeType(type).forEach((subtype) => {
 						for (const symbol of subtype.getApparentProperties()) {
 							getWithDefault(modifiedEntries, symbol.name, []).push(getModifications(symbol, true));
 						}
+					});
+				} else if (symbol && symbol.exports) {
+					symbol.exports.forEach((propSymbol) => {
+						getWithDefault(modifiedEntries, propSymbol.name, []).push(getModifications(propSymbol, true));
 					});
 				} else {
 					typeChecker.getSymbolsInScope(token, getScopeFlags(token)).forEach((symbol) => {
