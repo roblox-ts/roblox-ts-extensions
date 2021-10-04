@@ -7,6 +7,7 @@ import { findPrecedingType } from "../util/functions/findPrecedingType";
 import { getWithDefault } from "../util/functions/getOrDefault";
 import { getBoundaryAtPosition } from "../util/functions/getBoundaryAtPosition";
 import { findPrecedingSymbol } from "../util/functions/findPrecedingSymbol";
+import path from "path";
 
 interface ModifiedEntry {
 	remove?: boolean;
@@ -70,6 +71,16 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 	}
 
 	/**
+	 * Pushes all export symbols into an out array.
+	 */
+	function getExportSymbols(symbol: ts.Symbol, out: Array<ts.Symbol>) {
+		const typeChecker = provider.program.getTypeChecker();
+		for (const exportSymbol of typeChecker.getExportsOfModule(symbol)) {
+			out.push(exportSymbol);
+		}
+	}
+
+	/**
 	 * Retrieve the symbols that can be imported.
 	 * @param sourceFile The source file
 	 * @returns An array of symbols that can be imported
@@ -77,13 +88,36 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 	function getAutoImportSuggestions(): Array<ts.Symbol> {
 		const typeChecker = provider.program.getTypeChecker();
 		const symbols = new Array<ts.Symbol>();
-		ts.codefix.forEachExternalModuleToImportFrom(
-			provider.program,
-			provider.info.languageServiceHost,
-			false,
-			(moduleSymbol) => typeChecker.getExportsOfModule(moduleSymbol).forEach((symbol) => symbols.push(symbol)),
-		);
+		for (const ambientSymbol of typeChecker.getAmbientModules()) {
+			if (!ambientSymbol.name.includes("*")) {
+				getExportSymbols(ambientSymbol, symbols);
+			}
+		}
+		for (const file of provider.program.getSourceFiles()) {
+			if (ts.isExternalModule(file) || file.commonJsModuleIndicator !== undefined) {
+				getExportSymbols(typeChecker.getMergedSymbol(file.symbol), symbols);
+			}
+		}
 		return symbols;
+	}
+
+	/**
+	 * Retrieves the file name for a completion entry.
+	 */
+	function getCompletionSource(entry: ts.CompletionEntry) {
+		if (entry.data?.fileName) {
+			return entry.data.fileName;
+		}
+
+		if (entry.source) {
+			if (path.isAbsolute(entry.source)) {
+				return entry.source;
+			} else {
+				provider.log(`Invalid source for entry ${entry.name}: ${entry.source}`);
+			}
+		}
+
+		return "";
 	}
 
 	/**
@@ -142,7 +176,8 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 
 				const isImport = isAutoImport(v);
 				const boundaryAtContext = isImport ? fileBoundary : scopeBoundary;
-				const completionBoundary = modification.boundary ?? getNetworkBoundary(provider, v.source ?? "");
+				const completionBoundary =
+					modification.boundary ?? getNetworkBoundary(provider, getCompletionSource(v));
 				if (boundaryAtContext && !boundaryCanSee(boundaryAtContext, completionBoundary)) {
 					if (config.mode === "prefix") {
 						v.insertText = v.name;
