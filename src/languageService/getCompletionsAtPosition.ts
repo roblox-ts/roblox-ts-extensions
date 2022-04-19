@@ -32,6 +32,35 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 	}
 
 	/**
+	 * Gets the inherited members (class implements) for a node.
+	 * This also includes the node itself.
+	 * @param node The node to get inherited members for.
+	 */
+	function getPossibleMembers(node: ts.Node) {
+		const members = [node];
+		if (!ts.isClassElement(node)) return members;
+		if (!node.name) return members;
+
+		const name = ts.getNameFromPropertyName(node.name);
+		if (name && ts.isClassLike(node.parent)) {
+			const implementNodes = ts.getEffectiveImplementsTypeNodes(node.parent);
+			if (implementNodes) {
+				for (const implement of implementNodes) {
+					const symbol = provider.typeChecker.getSymbolAtLocation(implement.expression);
+					const member = symbol?.members?.get(ts.escapeLeadingUnderscores(name));
+					if (member && member.declarations) {
+						for (const declaration of member.declarations) {
+							members.push(declaration);
+						}
+					}
+				}
+			}
+		}
+
+		return members;
+	}
+
+	/**
 	 * Determines what actions should be done on this symbol.
 	 * @param symbol The symbol to check
 	 * @param inScope Is this symbol in scope, or in a field expression?
@@ -44,14 +73,18 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 
 		const declarations = symbol.getDeclarations() ?? [];
 		for (const declaration of declarations) {
-			for (const tag of ts.getJSDocTags(declaration)) {
-				const name = tag.tagName.text;
-				// If this symbol has the @hidden tag, remove
-				if (name === "hidden") modifiedEntry.remove = true;
-				// If this symbol has the @(server|client|shared) tag, set boundary
-				if (name === "server") modifiedEntry.boundary = NetworkBoundary.Server;
-				if (name === "client") modifiedEntry.boundary = NetworkBoundary.Client;
-				if (name === "shared") modifiedEntry.boundary = NetworkBoundary.Shared;
+			for (const node of getPossibleMembers(declaration)) {
+				for (const tag of ts.getJSDocTags(node)) {
+					const name = tag.tagName.text;
+					// If this symbol has the @hidden tag, remove
+					if (name === "hidden") modifiedEntry.remove = true;
+					// If this symbol has the @hideinherited tag, remove if this is an inherited node
+					if (name === "hideinherited" && node !== declaration) modifiedEntry.remove = true;
+					// If this symbol has the @(server|client|shared) tag, set boundary
+					if (name === "server") modifiedEntry.boundary = NetworkBoundary.Server;
+					if (name === "client") modifiedEntry.boundary = NetworkBoundary.Client;
+					if (name === "shared") modifiedEntry.boundary = NetworkBoundary.Shared;
+				}
 			}
 		}
 
