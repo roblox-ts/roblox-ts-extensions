@@ -46,7 +46,7 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 			const implementNodes = ts.getEffectiveImplementsTypeNodes(node.parent);
 			if (implementNodes) {
 				for (const implement of implementNodes) {
-					const symbol = provider.typeChecker.getSymbolAtLocation(implement.expression);
+					const symbol = provider.getSymbol(implement.expression);
 					const member = symbol?.members?.get(ts.escapeLeadingUnderscores(name));
 					if (member && member.declarations) {
 						for (const declaration of member.declarations) {

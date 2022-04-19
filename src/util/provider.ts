@@ -42,6 +42,13 @@ export class Provider {
 		return this.program.getTypeChecker();
 	}
 
+	getSymbol(node: ts.Node) {
+		const symbol = this.typeChecker.getSymbolAtLocation(node);
+		if (!symbol) return;
+
+		return this.ts.skipAlias(symbol, this.typeChecker);
+	}
+
 	/**
 	 * Log values to the console, all non-strings will be stringified.
 	 * @param args The values to be logged.
