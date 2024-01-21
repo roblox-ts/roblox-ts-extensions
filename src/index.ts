@@ -16,6 +16,8 @@ import { getCodeFixesAtPositionFactory } from "./languageService/getCodeFixesAtP
 import { getCompletionEntryDetailsFactory } from "./languageService/getCompletionEntryDetails";
 import { isRbxtsProject } from "./util/functions/isRbxtsProject";
 
+const ROBLOX_TS_MARKER = "_robloxts_marker_service";
+
 export = function init(modules: { typescript: typeof ts }) {
 	const ts = modules.typescript;
 	let provider: Provider;
@@ -24,6 +26,11 @@ export = function init(modules: { typescript: typeof ts }) {
 		if (!isRbxtsProject(ts, info)) {
 			// This project does not depend on @rbxts/compiler-types, so skip instantiation.
 			console.log("roblox-ts language extensions has skipped loading in non-rbxts project.");
+			return service;
+		}
+
+		if (ROBLOX_TS_MARKER in service) {
+			console.log("TypeScript attempted to double inject roblox-ts-extensions");
 			return service;
 		}
 
@@ -62,6 +69,7 @@ export = function init(modules: { typescript: typeof ts }) {
 
 		// Add any unimplemented default methods.
 		serviceProxy.addProxyMethods();
+		serviceProxy[ROBLOX_TS_MARKER as never] = (() => void 0) as never;
 
 		provider.log("roblox-ts language extensions has loaded.");
 		return serviceProxy;
