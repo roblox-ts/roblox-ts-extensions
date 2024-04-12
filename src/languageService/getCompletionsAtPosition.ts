@@ -76,8 +76,8 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 			for (const node of getPossibleMembers(declaration)) {
 				for (const tag of ts.getJSDocTags(node)) {
 					const name = tag.tagName.text;
-					// If this symbol has the @hidden tag, remove
-					if (name === "hidden") modifiedEntry.remove = true;
+					// If this symbol has the @hidden or @ignore tag, remove
+					if (name === "hidden" || name === "ignore") modifiedEntry.remove = true;
 					// If this symbol has the @hideinherited tag, remove if this is an inherited node
 					if (name === "hideinherited" && node !== declaration) modifiedEntry.remove = true;
 					// If this symbol has the @(server|client|shared) tag, set boundary
