@@ -32,8 +32,9 @@ interface PluginConfig {
 	// The autocomplete mode to use.
 	// Prefix: Prefixes completes with their network boundary, and makes cross-boundary (client<->server, shared->client/server) imports type only.
 	// Remove: Removes any cross-boundary imports entirely. Does not affect manual imports or existing imports.
+	// Show: Allows any cross-boundary import without showing a prefix.
 	// Default: prefix
-	mode: "prefix" | "remove";
+	mode: "prefix" | "remove" | "show";
 
 	// Whether to use Rojo to calculate server/client boundaries. The client and server properties can override certain directories if necessary.
 	// Default: true
