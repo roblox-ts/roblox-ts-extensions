@@ -245,7 +245,11 @@ export function getCompletionsAtPositionFactory(provider: Provider): ts.Language
 					if (config.mode === "prefix") {
 						v.insertText = v.name;
 						v.name = completionBoundary + ": " + v.name;
-					} else if (config.mode === "remove") return;
+					} else if (config.mode === "remove") {
+						return;
+					} else if (config.mode === "show") {
+						// Do nothing, this is the default behavior
+					}
 				}
 
 				entries.push(v);

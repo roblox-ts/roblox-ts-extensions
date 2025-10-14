@@ -7,7 +7,7 @@ export interface PluginConfig {
 	useRojo: boolean;
 	client: string[];
 	server: string[];
-	mode: "remove" | "prefix";
+	mode: "remove" | "prefix" | "show";
 	hideDeprecated: boolean;
 	diagnosticsMode: "off" | "warning" | "error" | "message";
 }
@@ -17,7 +17,7 @@ export interface PluginConfig {
  */
 const CONFIG_SCHEMA = z
 	.object({
-		mode: z.enum(["remove", "prefix"]),
+		mode: z.enum(["remove", "prefix", "show"]),
 		useRojo: z.boolean(),
 		client: z.array(z.string()),
 		server: z.array(z.string()),
